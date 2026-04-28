@@ -1,0 +1,126 @@
+7 Table:
+  users, gardens, plants, plant_instances,
+  tasks, weather_events, achievements
+
+
+================================================================
+  TABLES
+================================================================
+
+----------------------------------------------------------------
+1. users — гравці
+----------------------------------------------------------------
+Поле          Тип           Опис
+-----------   -----------   ------------------------------------
+id            INT (PK)      Унікальний ідентифікатор
+username      VARCHAR       Нікнейм гравця
+email         VARCHAR       Email (унікальний)
+created_at    TIMESTAMP     Дата реєстрації
+
+Зв'язки:
+  -> gardens        (один до багатьох)
+  -> achievements   (один до багатьох)
+
+
+----------------------------------------------------------------
+2. gardens — сади гравця
+----------------------------------------------------------------
+Поле          Тип           Опис
+-----------   -----------   ------------------------------------
+id            INT (PK)      Унікальний ідентифікатор
+user_id       INT (FK)      Посилання на users.id
+name          VARCHAR       Назва саду (наприклад "Мій перший сад")
+width_cells   INT           Ширина сітки (кількість клітинок)
+height_cells  INT           Висота сітки (кількість клітинок)
+created_at    TIMESTAMP     Дата створення
+
+Зв'язки:
+  -> plant_instances  (один до багатьох)
+  -> weather_events   (один до багатьох)
+
+----------------------------------------------------------------
+3. plants — довідник видів рослин
+----------------------------------------------------------------
+Поле          Тип           Опис
+-----------   -----------   ------------------------------------
+id            INT (PK)      Унікальний ідентифікатор
+name          VARCHAR       Назва (наприклад "Помідор")
+species       VARCHAR       Вид / сорт
+growth_days   INT           Кількість ігрових днів до повного росту
+climate_type  VARCHAR       Тип клімату (помірний / тропічний / посушливий)
+icon_key      VARCHAR       Ключ іконки у клієнтському застосунку
+
+Зв'язки:
+  -> plant_instances  (один до багатьох)
+
+----------------------------------------------------------------
+4. plant_instances — конкретна рослина в саду
+----------------------------------------------------------------
+Поле           Тип           Опис
+------------   -----------   ------------------------------------
+id             INT (PK)      Унікальний ідентифікатор
+garden_id      INT (FK)      Посилання на gardens.id
+plant_id       INT (FK)      Посилання на plants.id
+cell_x         INT           Координата X на сітці саду
+cell_y         INT           Координата Y на сітці саду
+planted_at     DATE          Ігрова дата посадки
+growth_stage   INT           Поточна стадія росту (0 — насіння, max — зрілість)
+is_watered     BOOLEAN       Чи полита сьогодні
+is_fertilized  BOOLEAN       Чи удобрена
+
+Зв'язки:
+  -> tasks  (один до багатьох)
+
+Обмеження:
+  UNIQUE (garden_id, cell_x, cell_y) — одна рослина на клітинку
+
+----------------------------------------------------------------
+5. tasks — завдання по догляду за рослиною
+----------------------------------------------------------------
+Поле               Тип           Опис
+----------------   -----------   ------------------------------------
+id                 INT (PK)      Унікальний ідентифікатор
+plant_instance_id  INT (FK)      Посилання на plant_instances.id
+task_type          VARCHAR       Тип завдання: water / fertilize / harvest / prune
+due_at             TIMESTAMP     Ігровий дедлайн виконання
+is_done            BOOLEAN       Чи виконано завдання
+
+----------------------------------------------------------------
+6. weather_events — погодні події в саду
+----------------------------------------------------------------
+Поле          Тип           Опис
+-----------   -----------   ------------------------------------
+id            INT (PK)      Унікальний ідентифікатор
+garden_id     INT (FK)      Посилання на gardens.id
+event_type    VARCHAR       Тип події: rain / drought / frost / heatwave / storm
+intensity     INT           Інтенсивність (1–10)
+occurred_at   TIMESTAMP     Коли відбулась подія
+
+----------------------------------------------------------------
+7. achievements — досягнення гравця
+----------------------------------------------------------------
+Поле            Тип           Опис
+-------------   -----------   ------------------------------------
+id              INT (PK)      Унікальний ідентифікатор
+user_id         INT (FK)      Посилання на users.id
+title           VARCHAR       Назва досягнення (наприклад "Перший врожай")
+condition_key   VARCHAR       Ключ умови (наприклад "harvested_first_plant")
+earned_at       TIMESTAMP     Дата отримання
+
+================================================================
+  ЗВЕДЕНА ТАБЛИЦЯ ЗВ'ЯЗКІВ
+================================================================
+
+Таблиця A          Відношення     Таблиця B
+-----------------  -------------  -----------------
+users              1 : N          gardens
+users              1 : N          achievements
+gardens            1 : N          plant_instances
+plants             1 : N          plant_instances
+plant_instances    1 : N          tasks
+gardens            1 : N          weather_events
+
+
+# Mermaind link: https://mermaid.ai/live/edit#pako:eNqlVVtv2jAU_iuWnzapVJRbmryhNlurrqgqdJMmpMiLD8FqYke2M0qB_z4bEkhCaLstbz7fuXznmhUOBQXsYZDXjESSJFOOzPc09h_HaL1utcQKfR0-XvujMfKQWHDVoDC8urn1v_v3_mhitYDIQq0wzRUfvg1Hk-B2NJ4MR1e-1Q0F14SdUP_hDyc3_mNgfOeeX1KQDHgIucHW4RvuKcwYryiX4NxqMhzfWd0IOEiiocZlI1qt9bqI5KEpjoikwIM0Jlwr9OneG32e4ikvF2a1e9iPcY0YRQ93B5HSkvEIZQokJwmgp2MMEsLiCqBZAkqTJEWhBEOTBkTv0E0Ru6D8dnQrsqEDI_9yHNkyqiovGNXzIIQ4VlVgDiya6zryAaJ5MT9UpSqfXDhjUumgEYrJKUSlEDKo5RBJsTDZUbJURwZhzBKTQKCX6bE3ZkY3eIZlU2qlIXu_F_k41bphke2ENQG24sFLg2x5kFHDfOeh1IFa1qZNUSmzX0LEQDhiKlgYawm0EZuB1CxmrwW8z323Se9nnOfFTXizyifmUBP1XKv8YbJoBpWcSuyo4FDjVbsj_9qSYjV_g2FfZbb1YyrNFdPLJsIiDDMpm3ahcjz_a3M10_HxnJoxpUyz8rBWqdlzffqaBM27-pdDe4hGKK0Gw2c4koxib0ZiBWc4AWlun3njbcgp1nMwy4zt5TXnnGSxttd2Y-xSwn8KkWBPy8xYSpFF872fLLUbkP_V9irAKcgrkXGNvcv-1gX2VvgFe92uc-72e53L3mDguINLx6BLI-6cDy56F-1-p9MbtN2u09-c4ddt1Pa52-tddDuu6zoDt-P0nc0f-sMvoA
+# Mermaind file: example/Crow/garden_crow_diagram.mmd
+# Chen link: example/Chen/garden_chen.xml
