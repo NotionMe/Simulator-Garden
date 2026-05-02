@@ -2,8 +2,8 @@ package ua.notion;
 
 import java.time.LocalDateTime;
 import ua.notion.domain.entity.User;
-import ua.notion.infrastructure.persistence.contract.UserRepository;
-import ua.notion.infrastructure.persistence.impl.UserRepositoryImpl;
+import ua.notion.infrastructure.persistence.PersistenceContext;
+import ua.notion.infrastructure.persistence.UnitOfWork;
 import ua.notion.infrastructure.persistence.util.ConnectionPool;
 
 public class Main {
@@ -12,27 +12,46 @@ public class Main {
         new ConnectionPool.PoolConfig.Builder().withUrl("jdbc:sqlite:./data/garden.db").build();
 
     ConnectionPool connectionPool = new ConnectionPool(config);
+    PersistenceContext persistenceContext = new PersistenceContext(connectionPool);
 
     try {
-      UserRepository userRepository = new UserRepositoryImpl(connectionPool);
+      // Begin transaction using Unit of Work
+      UnitOfWork unitOfWork = persistenceContext.beginTransaction();
 
-      User newUser =
-          User.builder()
-              .username("testuser")
-              .email("test@example.com")
-              .createdAt(LocalDateTime.now())
-              .build();
+      try {
+        User newUser =
+            User.builder()
+                .username("testuser_" + System.currentTimeMillis())
+                .email("test_" + System.currentTimeMillis() + "@example.com")
+                .createdAt(LocalDateTime.now())
+                .build();
 
-      userRepository.save(newUser);
-      System.out.println("User saved: " + newUser);
+        // Register entity as new
+        unitOfWork.registerNew(newUser);
 
-      var users = userRepository.findAll();
-      System.out.println("Total users: " + users.size());
+        // Save user
+        persistenceContext.getUserRepository().save(newUser);
+        System.out.println("User saved: " + newUser);
+
+        // Query all users
+        var users = persistenceContext.getUserRepository().findAll();
+        System.out.println("Total users: " + users.size());
+
+        // Commit transaction
+        persistenceContext.commitTransaction();
+        System.out.println("Transaction committed successfully");
+
+      } catch (Exception e) {
+        // Rollback on error
+        persistenceContext.rollbackTransaction();
+        System.err.println("Transaction rolled back due to error");
+        e.printStackTrace();
+      }
 
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
-      connectionPool.shutdown();
+      persistenceContext.close();
     }
   }
 }
