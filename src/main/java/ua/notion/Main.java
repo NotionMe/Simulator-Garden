@@ -5,11 +5,16 @@ import ua.notion.domain.entity.User;
 import ua.notion.infrastructure.persistence.PersistenceContext;
 import ua.notion.infrastructure.persistence.UnitOfWork;
 import ua.notion.infrastructure.persistence.util.ConnectionPool;
+import ua.notion.infrastructure.persistence.util.DatabaseInitializer;
 
 public class Main {
   public static void main(String[] args) {
+    String databaseUrl = "jdbc:sqlite:./data/garden.db";
+
+    DatabaseInitializer.ensureDatabase(databaseUrl);
+
     ConnectionPool.PoolConfig config =
-        new ConnectionPool.PoolConfig.Builder().withUrl("jdbc:sqlite:./data/garden.db").build();
+        new ConnectionPool.PoolConfig.Builder().withUrl(databaseUrl).build();
 
     ConnectionPool connectionPool = new ConnectionPool(config);
     PersistenceContext persistenceContext = new PersistenceContext(connectionPool);
