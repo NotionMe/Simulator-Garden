@@ -11,9 +11,10 @@ public class UnitOfWork implements AutoCloseable {
   private Connection connection;
   private boolean isActive = false;
 
-  private final Set<Object> newEntities = new HashSet<>();
-  private final Set<Object> dirtyEntities = new HashSet<>();
-  private final Set<Object> removedEntities = new HashSet<>();
+  // Use IdentityHashMap to track entities by reference, not by hashCode
+  private final Set<Object> newEntities = Collections.newSetFromMap(new IdentityHashMap<>());
+  private final Set<Object> dirtyEntities = Collections.newSetFromMap(new IdentityHashMap<>());
+  private final Set<Object> removedEntities = Collections.newSetFromMap(new IdentityHashMap<>());
 
   public UnitOfWork(ConnectionPool connectionPool) {
     this.connectionPool = connectionPool;

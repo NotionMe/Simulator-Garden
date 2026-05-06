@@ -45,6 +45,16 @@ public class PersistenceContext {
     }
     unitOfWork = new UnitOfWork(connectionPool);
     unitOfWork.begin();
+
+    // Set UnitOfWork for all repositories
+    ((GenericRepository<?, ?>) userRepository).setUnitOfWork(unitOfWork);
+    ((GenericRepository<?, ?>) gardenRepository).setUnitOfWork(unitOfWork);
+    ((GenericRepository<?, ?>) plantRepository).setUnitOfWork(unitOfWork);
+    ((GenericRepository<?, ?>) plantInstanceRepository).setUnitOfWork(unitOfWork);
+    ((GenericRepository<?, ?>) taskRepository).setUnitOfWork(unitOfWork);
+    ((GenericRepository<?, ?>) weatherEventRepository).setUnitOfWork(unitOfWork);
+    ((GenericRepository<?, ?>) achievementRepository).setUnitOfWork(unitOfWork);
+
     return unitOfWork;
   }
 
@@ -53,12 +63,24 @@ public class PersistenceContext {
       throw new IllegalStateException("No active transaction");
     }
     unitOfWork.commit();
+    clearUnitOfWorkFromRepositories();
   }
 
   public void rollbackTransaction() {
     if (unitOfWork != null && unitOfWork.isActive()) {
       unitOfWork.rollback();
     }
+    clearUnitOfWorkFromRepositories();
+  }
+
+  private void clearUnitOfWorkFromRepositories() {
+    ((GenericRepository<?, ?>) userRepository).setUnitOfWork(null);
+    ((GenericRepository<?, ?>) gardenRepository).setUnitOfWork(null);
+    ((GenericRepository<?, ?>) plantRepository).setUnitOfWork(null);
+    ((GenericRepository<?, ?>) plantInstanceRepository).setUnitOfWork(null);
+    ((GenericRepository<?, ?>) taskRepository).setUnitOfWork(null);
+    ((GenericRepository<?, ?>) weatherEventRepository).setUnitOfWork(null);
+    ((GenericRepository<?, ?>) achievementRepository).setUnitOfWork(null);
   }
 
   public UnitOfWork getUnitOfWork() {

@@ -16,12 +16,28 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
   protected final ConnectionPool connectionPool;
   protected final Class<T> entityClass;
   protected final String tableName;
+  private UnitOfWork unitOfWork;
 
   protected GenericRepository(
       ConnectionPool connectionPool, Class<T> entityClass, String tableName) {
     this.connectionPool = connectionPool;
     this.entityClass = entityClass;
     this.tableName = tableName;
+  }
+
+  public void setUnitOfWork(UnitOfWork unitOfWork) {
+    this.unitOfWork = unitOfWork;
+  }
+
+  protected Connection getConnection() throws SQLException {
+    if (unitOfWork != null && unitOfWork.isActive()) {
+      return unitOfWork.getConnection();
+    }
+    return connectionPool.getConnection();
+  }
+
+  protected boolean shouldCloseConnection() {
+    return unitOfWork == null || !unitOfWork.isActive();
   }
 
   @Override
@@ -96,7 +112,7 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
       sql.add(whereClause.toString());
     }
 
-    try (Connection connection = connectionPool.getConnection();
+    try (Connection connection = getConnection();
         PreparedStatement statement = connection.prepareStatement(sql.toString())) {
       setParameters(statement, parameters);
       try (ResultSet resultSet = statement.executeQuery()) {
@@ -110,12 +126,31 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
   @Override
   public long count() {
     String sql = String.format("SELECT COUNT(*) FROM %s", tableName);
-    try (Connection connection = connectionPool.getConnection();
-        PreparedStatement statement = connection.prepareStatement(sql);
-        ResultSet resultSet = statement.executeQuery()) {
-      return resultSet.next() ? resultSet.getLong(1) : 0;
+    Connection connection = null;
+    boolean shouldClose = false;
+
+    try {
+      connection = getConnection();
+      shouldClose = shouldCloseConnection();
+
+      PreparedStatement statement = connection.prepareStatement(sql);
+      ResultSet resultSet = statement.executeQuery();
+
+      long count = resultSet.next() ? resultSet.getLong(1) : 0;
+
+      resultSet.close();
+      statement.close();
+      return count;
     } catch (SQLException e) {
       throw new DatabaseAccessException("Помилка підрахунку записів", e);
+    } finally {
+      if (shouldClose && connection != null) {
+        try {
+          connection.close();
+        } catch (SQLException e) {
+          // Ігнор
+        }
+      }
     }
   }
 
@@ -126,7 +161,7 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
     aggregation.apply(selectClause, groupByClause);
     String sql = String.format("%s FROM %s%s", selectClause, tableName, groupByClause);
 
-    try (Connection connection = connectionPool.getConnection();
+    try (Connection connection = getConnection();
         PreparedStatement statement = connection.prepareStatement(sql);
         ResultSet resultSet = statement.executeQuery()) {
       List<R> results = new ArrayList<>();
@@ -142,8 +177,39 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
   @Override
   public T save(T entity) {
     String sql = buildInsertSql(entity);
-    List<Object> values = extractEntityValues(entity);
-    executeUpdate(sql, values);
+    List<Object> values = extractEntityValues(entity, false);
+
+    Connection connection = null;
+    boolean shouldCloseConnection = false;
+
+    try {
+      connection = getConnection();
+      shouldCloseConnection = (unitOfWork == null || !unitOfWork.isActive());
+
+      PreparedStatement statement =
+          connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+      setParameters(statement, values);
+      statement.executeUpdate();
+
+      try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+        if (generatedKeys.next()) {
+          Object id = generatedKeys.getObject(1);
+          setEntityId(entity, id);
+        }
+      }
+      statement.close();
+    } catch (SQLException e) {
+      throw new DatabaseAccessException("Помилка збереження сутності: " + sql, e);
+    } finally {
+      if (shouldCloseConnection && connection != null) {
+        try {
+          connection.close();
+        } catch (SQLException e) {
+          // Ігнор
+        }
+      }
+    }
+
     return entity;
   }
 
@@ -154,7 +220,7 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
     }
 
     String sql = buildInsertSql(entities.get(0));
-    try (Connection connection = connectionPool.getConnection();
+    try (Connection connection = getConnection();
         PreparedStatement statement = connection.prepareStatement(sql)) {
       for (T entity : entities) {
         List<Object> values = extractEntityValues(entity);
@@ -185,7 +251,7 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
     }
 
     String sql = buildUpdateSql();
-    try (Connection connection = connectionPool.getConnection();
+    try (Connection connection = getConnection();
         PreparedStatement statement = connection.prepareStatement(sql)) {
       for (Map.Entry<ID, T> entry : entities.entrySet()) {
         List<Object> values = extractEntityValues(entry.getValue());
@@ -214,7 +280,7 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
     }
 
     String sql = String.format("DELETE FROM %s WHERE id = ?", tableName);
-    try (Connection connection = connectionPool.getConnection();
+    try (Connection connection = getConnection();
         PreparedStatement statement = connection.prepareStatement(sql)) {
       for (ID id : ids) {
         statement.setObject(1, id);
@@ -227,7 +293,7 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
   }
 
   protected List<T> executeQuery(String sql, ParameterSetter parameterSetter) {
-    try (Connection connection = connectionPool.getConnection();
+    try (Connection connection = getConnection();
         PreparedStatement statement = connection.prepareStatement(sql)) {
       parameterSetter.setParameters(statement);
       try (ResultSet resultSet = statement.executeQuery()) {
@@ -244,7 +310,7 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
 
   protected <R> List<R> executeQuery(
       String sql, ParameterSetter parameterSetter, RowMapper<R> mapper) {
-    try (Connection connection = connectionPool.getConnection();
+    try (Connection connection = getConnection();
         PreparedStatement statement = connection.prepareStatement(sql)) {
       parameterSetter.setParameters(statement);
       try (ResultSet resultSet = statement.executeQuery()) {
@@ -260,7 +326,7 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
   }
 
   protected void executeUpdate(String sql, List<Object> parameters) {
-    try (Connection connection = connectionPool.getConnection();
+    try (Connection connection = getConnection();
         PreparedStatement statement = connection.prepareStatement(sql)) {
       setParameters(statement, parameters);
       statement.executeUpdate();
@@ -280,6 +346,7 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
     StringJoiner columns = new StringJoiner(", ");
     StringJoiner placeholders = new StringJoiner(", ");
     for (Field field : entityClass.getDeclaredFields()) {
+      if (field.getName().equals("id")) continue;
       columns.add(camelCaseToSnakeCase(field.getName()));
       placeholders.add("?");
     }
@@ -395,6 +462,16 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
     } catch (NoSuchFieldException | IllegalAccessException e) {
       throw new IllegalStateException(
           "Не вдалося отримати ідентифікатор для " + entity.getClass().getSimpleName(), e);
+    }
+  }
+
+  private void setEntityId(T entity, Object id) {
+    try {
+      var idField = entity.getClass().getDeclaredField("id");
+      idField.setAccessible(true);
+      idField.set(entity, id);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new EntityMappingException("Помилка встановлення ID сутності", e);
     }
   }
 
