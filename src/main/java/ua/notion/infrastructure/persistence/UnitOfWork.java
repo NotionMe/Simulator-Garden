@@ -45,6 +45,7 @@ public class UnitOfWork implements AutoCloseable {
       throw new DatabaseAccessException("Failed to commit transaction", e);
     } finally {
       isActive = false;
+      closeConnection();
     }
   }
 
@@ -58,6 +59,18 @@ public class UnitOfWork implements AutoCloseable {
       throw new DatabaseAccessException("Failed to rollback transaction", e);
     } finally {
       isActive = false;
+      closeConnection();
+    }
+  }
+
+  private void closeConnection() {
+    if (connection != null) {
+      try {
+        connection.close();
+      } catch (SQLException e) {
+        // Log but don't throw
+      }
+      connection = null;
     }
   }
 

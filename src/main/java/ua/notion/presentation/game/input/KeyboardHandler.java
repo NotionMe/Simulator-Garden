@@ -7,9 +7,14 @@ import javafx.scene.input.KeyEvent;
 
 public class KeyboardHandler {
   private final Set<KeyCode> pressedKeys = new HashSet<>();
+  private final Set<KeyCode> justPressedKeys = new HashSet<>();
 
   public void handleKeyPressed(KeyEvent event) {
-    pressedKeys.add(event.getCode());
+    KeyCode code = event.getCode();
+    if (!pressedKeys.contains(code)) {
+      justPressedKeys.add(code);
+    }
+    pressedKeys.add(code);
   }
 
   public void handleKeyReleased(KeyEvent event) {
@@ -18,6 +23,14 @@ public class KeyboardHandler {
 
   public boolean isPressed(KeyCode key) {
     return pressedKeys.contains(key);
+  }
+
+  public boolean isJustPressed(KeyCode key) {
+    return justPressedKeys.contains(key);
+  }
+
+  public void clearJustPressed() {
+    justPressedKeys.clear();
   }
 
   public boolean isMovingUp() {

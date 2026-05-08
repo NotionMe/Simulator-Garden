@@ -44,6 +44,11 @@ public class GameScene {
             () -> {
               AsyncExecutor.runOnUIThread(
                   () -> {
+                    viewModel
+                        .getTileMap()
+                        .addTestPlants(
+                            viewModel.getPlantManager(),
+                            ua.notion.presentation.game.assets.PlantBasesAtlas.PlantType.TOMATO);
                     isLoading = false;
                     gameLoop = new GameLoop(this);
                     gameLoop.start();
@@ -107,6 +112,9 @@ public class GameScene {
 
   private void renderGame() {
     viewModel.getTileMap().render(gc);
+    viewModel
+        .getPlantManager()
+        .render(gc, GameConstants.MAP_OFFSET_X, GameConstants.MAP_OFFSET_Y, 4.0);
     viewModel.getPlayer().render(gc, GameConstants.MAP_OFFSET_X, GameConstants.MAP_OFFSET_Y);
   }
 
@@ -116,7 +124,7 @@ public class GameScene {
     gc.setLineWidth(2);
     gc.strokeText("FPS: " + gameLoop.getFps(), 10, 20);
     gc.fillText("FPS: " + gameLoop.getFps(), 10, 20);
-    gc.fillText("WASD to move", 10, 40);
+    gc.fillText("WASD to move, G to grow plants", 10, 40);
   }
 
   public Canvas getCanvas() {

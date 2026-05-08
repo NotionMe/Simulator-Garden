@@ -8,6 +8,8 @@ import javafx.scene.image.Image;
 import ua.notion.infrastructure.async.AsyncExecutor;
 import ua.notion.presentation.game.GameConstants;
 import ua.notion.presentation.game.assets.GardenTileAtlas;
+import ua.notion.presentation.game.assets.PlantBasesAtlas.PlantType;
+import ua.notion.presentation.game.plant.PlantManager;
 import ua.notion.presentation.game.util.ResourceLoader;
 
 public class TileMap {
@@ -120,6 +122,16 @@ public class TileMap {
     tiles[15][9] = 10;
     tiles[16][8] = 10;
     tiles[16][9] = 10;
+  }
+
+  public void addTestPlants(PlantManager plantManager, PlantType plantType) {
+    System.out.println("Adding test plants to garden beds...");
+    plantManager.plantSeed(plantType, 5, 5);
+    plantManager.plantSeed(plantType, 5, 10);
+    plantManager.plantSeed(plantType, 10, 5);
+    plantManager.plantSeed(plantType, 10, 10);
+    plantManager.plantSeed(plantType, 15, 8);
+    System.out.println("Added 5 test plants");
   }
 
   public void render(GraphicsContext gc) {

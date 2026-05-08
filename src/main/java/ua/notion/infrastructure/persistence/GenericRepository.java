@@ -326,12 +326,32 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
   }
 
   protected void executeUpdate(String sql, List<Object> parameters) {
-    try (Connection connection = getConnection();
-        PreparedStatement statement = connection.prepareStatement(sql)) {
+    Connection connection = null;
+    PreparedStatement statement = null;
+    boolean shouldClose = shouldCloseConnection();
+
+    try {
+      connection = getConnection();
+      statement = connection.prepareStatement(sql);
       setParameters(statement, parameters);
       statement.executeUpdate();
     } catch (SQLException e) {
       throw new DatabaseAccessException("Помилка виконання оновлення: " + sql, e);
+    } finally {
+      if (statement != null) {
+        try {
+          statement.close();
+        } catch (SQLException e) {
+          // Ignore
+        }
+      }
+      if (shouldClose && connection != null) {
+        try {
+          connection.close();
+        } catch (SQLException e) {
+          // Ignore
+        }
+      }
     }
   }
 
