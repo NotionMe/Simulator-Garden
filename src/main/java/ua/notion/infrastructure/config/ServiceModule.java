@@ -10,6 +10,7 @@ import ua.notion.domain.service.PlantService;
 import ua.notion.domain.service.TaskService;
 import ua.notion.domain.service.UserService;
 import ua.notion.domain.service.WeatherEventService;
+import ua.notion.domain.service.auth.AuthenticationService;
 import ua.notion.infrastructure.persistence.PersistenceContext;
 
 public class ServiceModule extends AbstractModule {
@@ -59,5 +60,11 @@ public class ServiceModule extends AbstractModule {
   @Singleton
   AchievementService provideAchievementService(PersistenceContext context) {
     return new AchievementService(context);
+  }
+
+  @Provides
+  @Singleton
+  AuthenticationService provideAuthenticationService(PersistenceContext context) {
+    return new AuthenticationService(context);
   }
 }

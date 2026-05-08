@@ -26,12 +26,16 @@ public class TestDatabaseManager {
 
     conn.createStatement().execute("PRAGMA foreign_keys = ON");
 
+    // Apply all migrations
+    applyMigration(conn, "db/migration/V1__Create_schema.sql");
+    applyMigration(conn, "db/migration/V3__Add_password_to_users.sql");
+  }
+
+  private void applyMigration(Connection conn, String migrationPath) throws Exception {
     String migrationSql =
         new BufferedReader(
                 new InputStreamReader(
-                    getClass()
-                        .getClassLoader()
-                        .getResourceAsStream("db/migration/V1__Create_schema.sql")))
+                    getClass().getClassLoader().getResourceAsStream(migrationPath)))
             .lines()
             .collect(Collectors.joining("\n"));
 
