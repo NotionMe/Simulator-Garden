@@ -5,9 +5,28 @@ pkgs.mkShell {
     maven
     jdk21
     sqlite
+    # JavaFX dependencies for Wayland/X11
+    gtk3
+    glib
+    libGL
+    xorg.libXxf86vm
+    xorg.libX11
+    xorg.libXtst
+    xorg.libXrender
   ];
 
   shellHook = ''
+    # Set up library paths for JavaFX
+    export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [
+      pkgs.gtk3
+      pkgs.glib
+      pkgs.libGL
+      pkgs.xorg.libXxf86vm
+      pkgs.xorg.libX11
+      pkgs.xorg.libXtst
+      pkgs.xorg.libXrender
+    ]}:$LD_LIBRARY_PATH"
+
     echo ""
     echo "╔═══════════════════════════════════════════════════════╗"
     echo "║                                                       ║"
@@ -25,6 +44,7 @@ pkgs.mkShell {
     echo "🚀 Quick commands:"
     echo "   mvn compile              - Compile the project"
     echo "   mvn test                 - Run tests"
+    echo "   mvn javafx:run           - Run JavaFX GUI"
     echo "   mvn flyway:migrate       - Run database migrations"
     echo "   mvn flyway:info          - Check migration status"
     echo "   mvn spotless:apply       - Format code"

@@ -1,23 +1,20 @@
 package ua.notion;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import java.time.LocalDateTime;
 import ua.notion.domain.entity.User;
+import ua.notion.infrastructure.config.PersistenceModule;
 import ua.notion.infrastructure.persistence.PersistenceContext;
 import ua.notion.infrastructure.persistence.UnitOfWork;
-import ua.notion.infrastructure.persistence.util.ConnectionPool;
-import ua.notion.infrastructure.persistence.util.DatabaseInitializer;
 
 public class Main {
   public static void main(String[] args) {
-    String databaseUrl = "jdbc:sqlite:./data/garden.db";
+    // Create Guice injector with persistence module
+    Injector injector = Guice.createInjector(new PersistenceModule());
 
-    DatabaseInitializer.ensureDatabase(databaseUrl);
-
-    ConnectionPool.PoolConfig config =
-        new ConnectionPool.PoolConfig.Builder().withUrl(databaseUrl).build();
-
-    ConnectionPool connectionPool = new ConnectionPool(config);
-    PersistenceContext persistenceContext = new PersistenceContext(connectionPool);
+    // Get PersistenceContext from injector
+    PersistenceContext persistenceContext = injector.getInstance(PersistenceContext.class);
 
     try {
       // Begin transaction using Unit of Work
