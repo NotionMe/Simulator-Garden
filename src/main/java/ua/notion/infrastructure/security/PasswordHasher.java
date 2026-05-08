@@ -1,4 +1,4 @@
-package ua.notion.domain.service.auth;
+package ua.notion.infrastructure.security;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

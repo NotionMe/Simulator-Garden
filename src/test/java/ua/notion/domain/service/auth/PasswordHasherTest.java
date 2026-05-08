@@ -3,6 +3,7 @@ package ua.notion.domain.service.auth;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
+import ua.notion.infrastructure.security.PasswordHasher;
 
 class PasswordHasherTest {
 

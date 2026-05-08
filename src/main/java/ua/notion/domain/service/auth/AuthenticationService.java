@@ -5,6 +5,7 @@ import java.util.Optional;
 import ua.notion.domain.entity.User;
 import ua.notion.infrastructure.persistence.PersistenceContext;
 import ua.notion.infrastructure.persistence.contract.UserRepository;
+import ua.notion.infrastructure.security.PasswordHasher;
 
 public class AuthenticationService {
   private final PersistenceContext context;

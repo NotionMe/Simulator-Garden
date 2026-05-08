@@ -8,18 +8,14 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import ua.notion.domain.entity.User;
 import ua.notion.domain.service.auth.AuthenticationService;
 import ua.notion.infrastructure.config.PersistenceModule;
 import ua.notion.infrastructure.config.ServiceModule;
-import ua.notion.presentation.controller.GameController;
 import ua.notion.presentation.controller.auth.LoginController;
 
-public class JavaFXApp extends Application {
+public class AuthApp extends Application {
 
   private Injector injector;
-  private Stage primaryStage;
-  private User currentUser;
 
   @Override
   public void init() {
@@ -28,13 +24,8 @@ public class JavaFXApp extends Application {
 
   @Override
   public void start(Stage primaryStage) throws Exception {
-    this.primaryStage = primaryStage;
     Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());
 
-    showLoginScreen();
-  }
-
-  private void showLoginScreen() throws Exception {
     FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
 
     AuthenticationService authService = injector.getInstance(AuthenticationService.class);
@@ -42,11 +33,8 @@ public class JavaFXApp extends Application {
     controller.setStage(primaryStage);
     controller.setOnLoginSuccess(
         () -> {
-          try {
-            showGameScreen();
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
+          System.out.println("Login successful! Transitioning to main app...");
+          primaryStage.close();
         });
 
     loader.setController(controller);
@@ -60,25 +48,6 @@ public class JavaFXApp extends Application {
     primaryStage.setMinWidth(700);
     primaryStage.setMinHeight(650);
     primaryStage.show();
-  }
-
-  private void showGameScreen() throws Exception {
-    FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/game.fxml"));
-    Parent root = loader.load();
-
-    Scene scene = new Scene(root);
-    primaryStage.setTitle("Garden Simulator");
-    primaryStage.setScene(scene);
-    primaryStage.setResizable(false);
-
-    // Handle window close
-    primaryStage.setOnCloseRequest(
-        event -> {
-          GameController controller = loader.getController();
-          if (controller != null) {
-            controller.shutdown();
-          }
-        });
   }
 
   @Override

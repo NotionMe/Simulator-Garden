@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.shape.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           styleClass="root-container">
+
+    <!-- Background decorative elements -->
+    <VBox styleClass="background-decoration" StackPane.alignment="TOP_LEFT"/>
+
+    <!-- Main content -->
+    <VBox alignment="CENTER" spacing="0" maxWidth="480" styleClass="main-content">
+        <padding>
+            <Insets top="60" right="60" bottom="60" left="60"/>
+        </padding>
+
+        <!-- Logo/Icon area with decorative circle -->
+        <StackPane styleClass="logo-container" prefHeight="120" prefWidth="120">
+            <Circle radius="60" styleClass="logo-circle"/>
+            <Label text="🌱" styleClass="logo-icon">
+                <font>
+                    <Font size="48"/>
+                </font>
+            </Label>
+        </StackPane>
+
+        <Region prefHeight="32"/>
+
+        <!-- Title -->
+        <Label text="Garden Simulator" styleClass="main-title">
+            <font>
+                <Font name="Georgia Bold" size="36"/>
+            </font>
+        </Label>
+
+        <Region prefHeight="8"/>
+
+        <Label text="Cultivate your digital paradise" styleClass="subtitle">
+            <font>
+                <Font name="Georgia" size="15"/>
+            </font>
+        </Label>
+
+        <Region prefHeight="48"/>
+
+        <!-- Login Form Card -->
+        <VBox spacing="24" styleClass="form-card">
+            <padding>
+                <Insets top="40" right="40" bottom="40" left="40"/>
+            </padding>
+
+            <VBox spacing="8">
+                <Label text="Username" styleClass="field-label">
+                    <font>
+                        <Font name="System Bold" size="13"/>
+                    </font>
+                </Label>
+                <TextField fx:id="usernameField" promptText="Enter your username"
+                           styleClass="custom-text-field" prefHeight="48"/>
+            </VBox>
+
+            <VBox spacing="8">
+                <Label text="Password" styleClass="field-label">
+                    <font>
+                        <Font name="System Bold" size="13"/>
+                    </font>
+                </Label>
+                <PasswordField fx:id="passwordField" promptText="Enter your password"
+                               styleClass="custom-text-field" prefHeight="48"/>
+            </VBox>
+
+            <Label fx:id="errorLabel" text="Error message" styleClass="error-label"
+                   visible="false" wrapText="true"/>
+
+            <Region prefHeight="8"/>
+
+            <Button fx:id="loginButton" text="Sign In" styleClass="primary-button"
+                    prefHeight="52">
+                <font>
+                    <Font name="System Bold" size="15"/>
+                </font>
+            </Button>
+
+            <Separator styleClass="form-separator"/>
+
+            <HBox spacing="8" alignment="CENTER" styleClass="register-prompt">
+                <Label text="New to Garden Simulator?" styleClass="prompt-text">
+                    <font>
+                        <Font size="13"/>
+                    </font>
+                </Label>
+                <Button fx:id="registerButton" text="Create Account" styleClass="link-button">
+                    <font>
+                        <Font name="System Bold" size="13"/>
+                    </font>
+                </Button>
+            </HBox>
+        </VBox>
+
+        <Region prefHeight="24"/>
+
+        <!-- Footer -->
+        <Label text="© 2026 Garden Simulator" styleClass="footer-text">
+            <font>
+                <Font size="11"/>
+            </font>
+        </Label>
+    </VBox>
+</StackPane>

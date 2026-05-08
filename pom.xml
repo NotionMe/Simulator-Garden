@@ -78,6 +78,13 @@
             <artifactId>javafx-fxml</artifactId>
             <version>${javafx.version}</version>
         </dependency>
+
+        <!-- AtlantaFX -->
+        <dependency>
+            <groupId>io.github.mkpaz</groupId>
+            <artifactId>atlantafx-base</artifactId>
+            <version>2.0.1</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -166,6 +173,14 @@
                 <configuration>
                     <mainClass>ua.notion.Main</mainClass>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>auth-app</id>
+                        <configuration>
+                            <mainClass>ua.notion.presentation.AuthApp</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- JavaFX Maven Plugin -->
