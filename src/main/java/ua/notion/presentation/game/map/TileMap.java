@@ -90,7 +90,36 @@ public class TileMap {
       }
     }
 
-    System.out.println("Park map generated with water borders");
+    addGardenBeds();
+
+    System.out.println("Park map generated with water borders and garden beds");
+  }
+
+  private void addGardenBeds() {
+    tiles[5][5] = 10;
+    tiles[5][6] = 10;
+    tiles[6][5] = 10;
+    tiles[6][6] = 10;
+
+    tiles[5][10] = 10;
+    tiles[5][11] = 10;
+    tiles[6][10] = 10;
+    tiles[6][11] = 10;
+
+    tiles[10][5] = 10;
+    tiles[10][6] = 10;
+    tiles[11][5] = 10;
+    tiles[11][6] = 10;
+
+    tiles[10][10] = 10;
+    tiles[10][11] = 10;
+    tiles[11][10] = 10;
+    tiles[11][11] = 10;
+
+    tiles[15][8] = 10;
+    tiles[15][9] = 10;
+    tiles[16][8] = 10;
+    tiles[16][9] = 10;
   }
 
   public void render(GraphicsContext gc) {
