@@ -2,23 +2,19 @@ package ua.notion.presentation.game.assets;
 
 public final class GardenTileAtlas {
 
-  // Prevent instantiation
   private GardenTileAtlas() {
     throw new AssertionError("Cannot instantiate constants class");
   }
 
-  // Tile dimensions (isometric tiles)
   public static final int BLOCK_TILE_WIDTH = 40;
   public static final int BLOCK_TILE_HEIGHT = 34;
 
-  // Atlas layout parameters
-  public static final int ATLAS_STEP_X = 35; // Horizontal spacing between tiles in spritesheet
-  public static final int ATLAS_STEP_Y = 33; // Vertical spacing between tiles in spritesheet
-  public static final int ATLAS_OFFSET_X = 1; // Left margin in spritesheet
-  public static final int ATLAS_OFFSET_Y = 0; // Top margin in spritesheet
+  public static final int ATLAS_STEP_X = 35; // Horizontal
+  public static final int ATLAS_STEP_Y = 33; // Vertical
+  public static final int ATLAS_OFFSET_X = 1; // Left margin
+  public static final int ATLAS_OFFSET_Y = 0; // Top margin
 
   // blocks.png coordinates (216x270 pixels, 6 columns × 8 rows)
-  // Row 0: Grass variations
   public static final TileCoordinate GRASS_1 =
       new TileCoordinate(
           ATLAS_OFFSET_X + 0 * ATLAS_STEP_X,

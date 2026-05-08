@@ -2,47 +2,65 @@ package ua.notion.presentation.game;
 
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
-import ua.notion.presentation.game.map.TileMap;
+import ua.notion.infrastructure.async.AsyncExecutor;
+import ua.notion.presentation.game.viewmodel.GameViewModel;
 
 public class GameScene {
   private final Canvas canvas;
   private final GraphicsContext gc;
+  private final GameViewModel viewModel;
   private GameLoop gameLoop;
-  private TileMap tileMap;
-
-  public static final int TILE_SIZE = 54;
-  public static final int SCALE = 1; // No scaling needed for isometric tiles
-  public static final int SCALED_TILE_SIZE = TILE_SIZE * SCALE;
-
-  public static final int MAP_WIDTH = 15; // columns
-  public static final int MAP_HEIGHT = 10; // rows
-
-  // Canvas size (larger for isometric projection)
-  public static final int CANVAS_WIDTH = 960;
-  public static final int CANVAS_HEIGHT = 720;
+  private Image backgroundImage;
+  private boolean isLoading = true;
 
   public GameScene() {
-    this.canvas = new Canvas(CANVAS_WIDTH, CANVAS_HEIGHT);
+    this.canvas = new Canvas(GameConstants.CANVAS_WIDTH, GameConstants.CANVAS_HEIGHT);
     this.gc = canvas.getGraphicsContext2D();
+    this.viewModel = new GameViewModel(GameConstants.MAP_WIDTH, GameConstants.MAP_HEIGHT);
+    setupInputHandlers();
+  }
+
+  private void setupInputHandlers() {
+    canvas.setFocusTraversable(true);
+    canvas.setOnKeyPressed(viewModel.getKeyboardHandler()::handleKeyPressed);
+    canvas.setOnKeyReleased(viewModel.getKeyboardHandler()::handleKeyReleased);
   }
 
   public void initialize() {
-    // Load assets and initialize game objects
     System.out.println("Initializing game scene...");
 
-    // Create tilemap (no tileSize parameter needed anymore)
-    tileMap = new TileMap(MAP_WIDTH, MAP_HEIGHT);
-
-    // Create game loop
-    gameLoop = new GameLoop(this);
+    AsyncExecutor.runAsync(
+            () -> {
+              backgroundImage =
+                  new Image(
+                      getClass()
+                          .getResourceAsStream(
+                              "/assets/background/1024x512/Cloudy Sky/Cloudy_Sky-Blue_01-1024x512.png"));
+            })
+        .thenCompose(v -> viewModel.loadAsync())
+        .thenRun(
+            () -> {
+              AsyncExecutor.runOnUIThread(
+                  () -> {
+                    isLoading = false;
+                    gameLoop = new GameLoop(this);
+                    gameLoop.start();
+                    canvas.requestFocus();
+                    System.out.println("Game scene initialized and started");
+                  });
+            })
+        .exceptionally(
+            error -> {
+              System.err.println("Failed to initialize game: " + error.getMessage());
+              error.printStackTrace();
+              return null;
+            });
   }
 
   public void start() {
-    if (gameLoop != null) {
-      gameLoop.start();
-      System.out.println("Game loop started");
-    }
+    System.out.println("Start called - game loop will start after async loading");
   }
 
   public void stop() {
@@ -53,25 +71,52 @@ public class GameScene {
   }
 
   public void update(double deltaTime) {
-    // Update game logic here
+    if (isLoading) {
+      return;
+    }
+    viewModel.update(deltaTime);
   }
 
   public void render() {
-    // Clear canvas
-    gc.setFill(Color.BLACK);
-    gc.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-    // Render tilemap
-    if (tileMap != null) {
-      tileMap.render(gc);
+    if (isLoading) {
+      renderLoading();
+      return;
     }
 
-    // Render FPS
+    renderBackground();
+    renderGame();
+    renderUI();
+  }
+
+  private void renderLoading() {
+    gc.setFill(Color.BLACK);
+    gc.fillRect(0, 0, GameConstants.CANVAS_WIDTH, GameConstants.CANVAS_HEIGHT);
+    gc.setFill(Color.WHITE);
+    gc.fillText(
+        "Loading...", GameConstants.CANVAS_WIDTH / 2.0 - 30, GameConstants.CANVAS_HEIGHT / 2.0);
+  }
+
+  private void renderBackground() {
+    if (backgroundImage != null) {
+      gc.drawImage(backgroundImage, 0, 0, GameConstants.CANVAS_WIDTH, GameConstants.CANVAS_HEIGHT);
+    } else {
+      gc.setFill(Color.BLACK);
+      gc.fillRect(0, 0, GameConstants.CANVAS_WIDTH, GameConstants.CANVAS_HEIGHT);
+    }
+  }
+
+  private void renderGame() {
+    viewModel.getTileMap().render(gc);
+    viewModel.getPlayer().render(gc, GameConstants.MAP_OFFSET_X, GameConstants.MAP_OFFSET_Y);
+  }
+
+  private void renderUI() {
     gc.setFill(Color.WHITE);
     gc.setStroke(Color.BLACK);
     gc.setLineWidth(2);
     gc.strokeText("FPS: " + gameLoop.getFps(), 10, 20);
     gc.fillText("FPS: " + gameLoop.getFps(), 10, 20);
+    gc.fillText("WASD to move", 10, 40);
   }
 
   public Canvas getCanvas() {

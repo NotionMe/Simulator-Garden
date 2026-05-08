@@ -1,6 +1,5 @@
 package ua.notion.presentation.game.assets;
 
-/** Represents a tile's position in a spritesheet Immutable value object following DRY principle */
 public class TileCoordinate {
   private final int x;
   private final int y;
