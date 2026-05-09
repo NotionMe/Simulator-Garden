@@ -395,7 +395,10 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
           if (field.getType().isEnum()) {
             value = ((Enum<?>) value).name();
           } else if (field.getType() == LocalDateTime.class) {
-            value = Timestamp.valueOf((LocalDateTime) value);
+            // SQLite: зберігаємо як текст у форматі "YYYY-MM-DD HH:MM:SS"
+            value =
+                ((LocalDateTime) value)
+                    .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
           } else if (field.getType() == LocalDate.class) {
             value = Date.valueOf((LocalDate) value);
           }
@@ -443,8 +446,19 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
           value instanceof Number
               ? ((Number) value).intValue() != 0
               : Boolean.parseBoolean(value.toString());
-      case "java.time.LocalDateTime" ->
-          value instanceof Timestamp ? ((Timestamp) value).toLocalDateTime() : null;
+      case "java.time.LocalDateTime" -> {
+        if (value instanceof Timestamp) {
+          yield ((Timestamp) value).toLocalDateTime();
+        } else if (value instanceof String) {
+          yield LocalDateTime.parse(
+              value.toString().replace(" ", "T")); // "2026-05-10 18:00:00" -> ISO format
+        } else if (value instanceof Number) {
+          yield LocalDateTime.ofInstant(
+              java.time.Instant.ofEpochMilli(((Number) value).longValue()),
+              java.time.ZoneId.systemDefault());
+        }
+        yield null;
+      }
       case "java.time.LocalDate" -> value instanceof Date ? ((Date) value).toLocalDate() : null;
       default -> value;
     };

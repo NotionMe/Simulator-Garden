@@ -24,6 +24,8 @@ public class PlantService {
     Plant plant =
         Plant.builder()
             .name(name)
+            .firstName(null)
+            .lastName(null)
             .species(species)
             .growthDays(growthDays)
             .climateType(climateType)

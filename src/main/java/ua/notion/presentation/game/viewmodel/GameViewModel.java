@@ -6,18 +6,21 @@ import ua.notion.presentation.game.entity.Player;
 import ua.notion.presentation.game.input.KeyboardHandler;
 import ua.notion.presentation.game.map.TileMap;
 import ua.notion.presentation.game.plant.PlantManager;
+import ua.notion.presentation.viewmodel.SeedInventoryViewModel;
 
 public class GameViewModel {
   private final TileMap tileMap;
   private final Player player;
   private final KeyboardHandler keyboardHandler;
   private final PlantManager plantManager;
+  private final SeedInventoryViewModel seedInventory;
 
   public GameViewModel(int mapWidth, int mapHeight) {
     this.tileMap = new TileMap(mapWidth, mapHeight);
     this.player = new Player(10, 10);
     this.keyboardHandler = new KeyboardHandler();
     this.plantManager = new PlantManager(tileMap.getIsoCoords());
+    this.seedInventory = new SeedInventoryViewModel();
   }
 
   public CompletableFuture<Void> loadAsync() {
@@ -75,5 +78,9 @@ public class GameViewModel {
 
   public PlantManager getPlantManager() {
     return plantManager;
+  }
+
+  public SeedInventoryViewModel getSeedInventory() {
+    return seedInventory;
   }
 }

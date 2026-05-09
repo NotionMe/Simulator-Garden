@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            stylesheets="@../css/menu.css">
+
+    <!-- Top Bar -->
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="20" styleClass="top-bar">
+            <padding>
+                <Insets top="20" bottom="20" left="30" right="30"/>
+            </padding>
+            <Button fx:id="backButton" onAction="#handleBack" text="← Back" styleClass="secondary-button"/>
+            <Label text="Plant Catalog" styleClass="title-label">
+                <font>
+                    <Font name="System Bold" size="32"/>
+                </font>
+            </Label>
+        </HBox>
+    </top>
+
+    <!-- Center Content -->
+    <center>
+        <VBox spacing="20">
+            <padding>
+                <Insets top="20" bottom="20" left="30" right="30"/>
+            </padding>
+
+            <!-- Filter Section -->
+            <HBox spacing="15" alignment="CENTER_LEFT">
+                <Label text="Search:">
+                    <font>
+                        <Font size="14"/>
+                    </font>
+                </Label>
+                <TextField fx:id="searchField" promptText="Plant name or species..." prefWidth="200"/>
+
+                <Label text="Climate:">
+                    <font>
+                        <Font size="14"/>
+                    </font>
+                </Label>
+                <ComboBox fx:id="climateFilterCombo" promptText="All Climates" prefWidth="150"/>
+
+                <Button fx:id="searchButton" onAction="#handleSearch" text="Search" styleClass="secondary-button"/>
+                <Button fx:id="clearFilterButton" onAction="#handleClearFilter" text="Clear" styleClass="secondary-button"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button fx:id="addPlantButton" onAction="#handleAddPlant" text="+ New Plant" styleClass="primary-button"/>
+            </HBox>
+
+            <!-- Plant Table -->
+            <TableView fx:id="plantTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="idColumn" text="ID" prefWidth="50"/>
+                    <TableColumn fx:id="nameColumn" text="Name" prefWidth="150"/>
+                    <TableColumn fx:id="speciesColumn" text="Species" prefWidth="150"/>
+                    <TableColumn fx:id="growthDaysColumn" text="Growth Days" prefWidth="100"/>
+                    <TableColumn fx:id="climateColumn" text="Climate" prefWidth="120"/>
+                    <TableColumn fx:id="actionsColumn" text="Actions" prefWidth="200"/>
+                </columns>
+                <columnResizePolicy>
+                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                </columnResizePolicy>
+            </TableView>
+        </VBox>
+    </center>
+</BorderPane>

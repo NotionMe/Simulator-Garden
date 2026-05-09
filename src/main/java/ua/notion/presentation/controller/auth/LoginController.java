@@ -61,11 +61,28 @@ public class LoginController {
 
     if (userOpt.isPresent()) {
       User user = userOpt.get();
-      showSuccess("Welcome, " + user.getUsername() + "!");
+      openMenuScreen(user);
+    }
+  }
 
-      if (onLoginSuccess != null) {
-        onLoginSuccess.run();
-      }
+  private void openMenuScreen(User user) {
+    try {
+      javafx.fxml.FXMLLoader loader =
+          new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/menu.fxml"));
+      javafx.scene.Parent root = loader.load();
+
+      ua.notion.presentation.controller.MenuController menuController = loader.getController();
+      menuController.setCurrentUser(user);
+
+      stage.getScene().setRoot(root);
+      stage.setTitle("Garden Simulator - Main Menu");
+      stage.setMinWidth(800);
+      stage.setMinHeight(600);
+      stage.setMaxWidth(1920);
+      stage.setMaxHeight(1080);
+    } catch (Exception e) {
+      viewModel.errorMessageProperty().set("Failed to open menu: " + e.getMessage());
+      viewModel.hasErrorProperty().set(true);
     }
   }
 

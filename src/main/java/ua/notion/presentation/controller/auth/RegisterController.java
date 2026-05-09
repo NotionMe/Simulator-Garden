@@ -56,14 +56,36 @@ public class RegisterController {
   private void handleRegister() {
     try {
       User user = viewModel.register();
-      showSuccess("Account created successfully!\n\nYou can now log in with your credentials.");
-      if (onRegisterSuccess != null) {
-        onRegisterSuccess.run();
-      }
+      showSuccess(
+          "Account created successfully!\n\nWelcome to Garden Simulator, "
+              + user.getUsername()
+              + "!");
+      openMenuScreen(user);
     } catch (IllegalArgumentException e) {
       // Error already set in viewModel
     } catch (Exception e) {
       // Error already set in viewModel
+    }
+  }
+
+  private void openMenuScreen(User user) {
+    try {
+      javafx.fxml.FXMLLoader loader =
+          new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/menu.fxml"));
+      javafx.scene.Parent root = loader.load();
+
+      ua.notion.presentation.controller.MenuController menuController = loader.getController();
+      menuController.setCurrentUser(user);
+
+      stage.getScene().setRoot(root);
+      stage.setTitle("Garden Simulator - Main Menu");
+      stage.setMinWidth(800);
+      stage.setMinHeight(600);
+      stage.setMaxWidth(1920);
+      stage.setMaxHeight(1080);
+    } catch (Exception e) {
+      viewModel.errorMessageProperty().set("Failed to open menu: " + e.getMessage());
+      viewModel.hasErrorProperty().set(true);
     }
   }
 

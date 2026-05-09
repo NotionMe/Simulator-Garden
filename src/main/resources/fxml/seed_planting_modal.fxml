@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="ua.notion.presentation.controller.SeedPlantingModalController"
+           styleClass="modal-overlay">
+
+    <!-- Semi-transparent backdrop -->
+    <Region styleClass="modal-backdrop" onMouseClicked="#closeModal"/>
+
+    <!-- Modal content -->
+    <VBox styleClass="modal-container" maxWidth="480" maxHeight="600" spacing="0">
+
+        <!-- Header with close button -->
+        <HBox styleClass="modal-header" alignment="CENTER">
+            <Label text="Plant Seeds" styleClass="modal-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="×" styleClass="close-button" onAction="#closeModal"/>
+        </HBox>
+
+        <!-- Seed grid -->
+        <ScrollPane styleClass="seed-scroll-pane" fitToWidth="true" VBox.vgrow="ALWAYS">
+            <GridPane fx:id="seedGrid" styleClass="seed-grid" hgap="16" vgap="16">
+                <padding>
+                    <Insets top="24" right="24" bottom="24" left="24"/>
+                </padding>
+            </GridPane>
+        </ScrollPane>
+
+        <!-- Empty state message -->
+        <VBox fx:id="emptyState" styleClass="empty-state" alignment="CENTER" spacing="12" visible="false" managed="false">
+            <Label text="No seeds available" styleClass="empty-state-title"/>
+            <Label text="Visit the shop to buy seeds" styleClass="empty-state-subtitle"/>
+        </VBox>
+
+    </VBox>
+
+</StackPane>

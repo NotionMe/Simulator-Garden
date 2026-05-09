@@ -20,12 +20,100 @@ public class GameScene {
     this.gc = canvas.getGraphicsContext2D();
     this.viewModel = new GameViewModel(GameConstants.MAP_WIDTH, GameConstants.MAP_HEIGHT);
     setupInputHandlers();
+    setupResponsiveCanvas();
+  }
+
+  private void setupResponsiveCanvas() {
+    // Make canvas responsive to parent container size
+    canvas.widthProperty().addListener((obs, oldVal, newVal) -> render());
+    canvas.heightProperty().addListener((obs, oldVal, newVal) -> render());
   }
 
   private void setupInputHandlers() {
     canvas.setFocusTraversable(true);
     canvas.setOnKeyPressed(viewModel.getKeyboardHandler()::handleKeyPressed);
     canvas.setOnKeyReleased(viewModel.getKeyboardHandler()::handleKeyReleased);
+    canvas.setOnMouseClicked(this::handleMouseClick);
+  }
+
+  private void handleMouseClick(javafx.scene.input.MouseEvent event) {
+    if (isLoading || !viewModel.getTileMap().isLoaded()) {
+      return;
+    }
+
+    double mouseX = event.getX();
+    double mouseY = event.getY();
+
+    // Convert screen coordinates to tile coordinates
+    int[] tileCoords = screenToTile(mouseX, mouseY);
+    if (tileCoords != null) {
+      int col = tileCoords[0];
+      int row = tileCoords[1];
+
+      System.out.println(
+          "Clicked at screen (" + mouseX + ", " + mouseY + ") -> tile (" + col + ", " + row + ")");
+
+      // Check if clicked on dirt tile (ID 10)
+      if (isValidTile(col, row)) {
+        int tileId = getTileId(col, row);
+        System.out.println("Tile ID: " + tileId);
+        if (tileId == 10) {
+          showSeedPlantingModal(col, row);
+        }
+      }
+    }
+  }
+
+  private int[] screenToTile(double screenX, double screenY) {
+    // Adjust for map offset
+    double adjustedX = screenX - GameConstants.MAP_OFFSET_X;
+    double adjustedY = screenY - GameConstants.MAP_OFFSET_Y;
+
+    // Use the existing IsometricCoordinates conversion methods
+    var isoCoords = viewModel.getTileMap().getIsoCoords();
+    int col = isoCoords.toGridCol(adjustedX, adjustedY);
+    int row = isoCoords.toGridRow(adjustedX, adjustedY);
+
+    return new int[] {col, row};
+  }
+
+  private boolean isValidTile(int col, int row) {
+    return col >= 0
+        && col < viewModel.getTileMap().getWidth()
+        && row >= 0
+        && row < viewModel.getTileMap().getHeight();
+  }
+
+  private int getTileId(int col, int row) {
+    return viewModel.getTileMap().getTileId(col, row);
+  }
+
+  private void showSeedPlantingModal(int col, int row) {
+    // Pause game loop while modal is open to prevent flickering
+    if (gameLoop != null) {
+      gameLoop.stop();
+    }
+
+    var modal =
+        ua.notion.presentation.controller.SeedPlantingModalController.createModal(
+            viewModel.getSeedInventory(),
+            plantType -> {
+              // Plant the seed at the clicked location
+              if (viewModel.getSeedInventory().consumeSeed(plantType)) {
+                viewModel.getPlantManager().plantSeed(plantType, col, row);
+                System.out.println("Planted " + plantType + " at (" + col + ", " + row + ")");
+              }
+            },
+            () -> {
+              // Resume game loop when modal closes
+              if (gameLoop != null) {
+                gameLoop.start();
+              }
+            });
+
+    if (modal != null && canvas.getParent() instanceof javafx.scene.layout.StackPane) {
+      ((javafx.scene.layout.StackPane) canvas.getParent()).getChildren().add(modal);
+    }
   }
 
   public void initialize() {
@@ -94,19 +182,22 @@ public class GameScene {
   }
 
   private void renderLoading() {
+    double width = canvas.getWidth();
+    double height = canvas.getHeight();
     gc.setFill(Color.BLACK);
-    gc.fillRect(0, 0, GameConstants.CANVAS_WIDTH, GameConstants.CANVAS_HEIGHT);
+    gc.fillRect(0, 0, width, height);
     gc.setFill(Color.WHITE);
-    gc.fillText(
-        "Loading...", GameConstants.CANVAS_WIDTH / 2.0 - 30, GameConstants.CANVAS_HEIGHT / 2.0);
+    gc.fillText("Loading...", width / 2.0 - 30, height / 2.0);
   }
 
   private void renderBackground() {
+    double width = canvas.getWidth();
+    double height = canvas.getHeight();
     if (backgroundImage != null) {
-      gc.drawImage(backgroundImage, 0, 0, GameConstants.CANVAS_WIDTH, GameConstants.CANVAS_HEIGHT);
+      gc.drawImage(backgroundImage, 0, 0, width, height);
     } else {
       gc.setFill(Color.BLACK);
-      gc.fillRect(0, 0, GameConstants.CANVAS_WIDTH, GameConstants.CANVAS_HEIGHT);
+      gc.fillRect(0, 0, width, height);
     }
   }
 

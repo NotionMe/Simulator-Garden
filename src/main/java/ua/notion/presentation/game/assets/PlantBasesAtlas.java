@@ -6,10 +6,10 @@ public final class PlantBasesAtlas {
     throw new AssertionError("Cannot instantiate constants class");
   }
 
-  public static final int TILE_WIDTH = 16;
-  public static final int TILE_HEIGHT = 16;
-  public static final int COLUMNS = 26; // всього колонок у sprite sheet (416/16)
-  public static final int ROWS = 18; // всього рядків у sprite sheet (288/16)
+  public static final int TILE_WIDTH = 64;
+  public static final int TILE_HEIGHT = 64;
+  public static final int COLUMNS = 10; // всього колонок у sprite sheet (416/16)
+  public static final int ROWS = 5; // всього рядків у sprite sheet (288/16)
 
   public static final String SPRITE_PATH = "Garden_Planters/Garden_Planters_PlantBases.png";
 

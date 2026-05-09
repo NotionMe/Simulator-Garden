@@ -17,6 +17,10 @@ public class GameController {
     gameScene = new GameScene();
     gameScene.initialize();
 
+    // Bind canvas size to container size for responsiveness
+    gameScene.getCanvas().widthProperty().bind(gameContainer.widthProperty());
+    gameScene.getCanvas().heightProperty().bind(gameContainer.heightProperty());
+
     gameContainer.getChildren().add(gameScene.getCanvas());
 
     gameScene.start();

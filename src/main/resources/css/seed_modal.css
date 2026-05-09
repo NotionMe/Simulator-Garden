@@ -1,0 +1,209 @@
+/* Seed Planting Modal - Earthy Garden Aesthetic */
+/* Bold, organic design with tactile depth and natural warmth */
+
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap');
+
+/* Modal Overlay */
+.modal-overlay {
+    -fx-background-color: transparent;
+}
+
+.modal-backdrop {
+    -fx-background-color: #1a1a1acc;
+    -fx-effect: dropshadow(gaussian, #000000cc, 80, 0, 0, 0);
+}
+
+/* Modal Container - Rounded organic shape */
+.modal-container {
+    -fx-background-color: linear-gradient(135deg, #faf8f3 0%, #f5f1e8 100%);
+    -fx-background-radius: 32;
+    -fx-effect: dropshadow(gaussian, #00000040, 60, 0.3, 0, 20);
+    -fx-border-color: #d4c5a9;
+    -fx-border-width: 2;
+    -fx-border-radius: 32;
+    -fx-padding: 0;
+}
+
+/* Header */
+.modal-header {
+    -fx-background-color: linear-gradient(to right, #8b7355, #a0826d);
+    -fx-background-radius: 30 30 0 0;
+    -fx-padding: 24 28;
+    -fx-effect: innershadow(gaussian, #00000026, 8, 0, 0, 2);
+}
+
+.modal-title {
+    -fx-font-family: 'Crimson Pro', serif;
+    -fx-font-size: 28px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #faf8f3;
+    -fx-effect: dropshadow(gaussian, #00000066, 3, 0, 0, 2);
+    -fx-letter-spacing: 0.5px;
+}
+
+/* Close Button - Organic X */
+.close-button {
+    -fx-background-color: #6b5744;
+    -fx-text-fill: #faf8f3;
+    -fx-font-size: 32px;
+    -fx-font-weight: 300;
+    -fx-background-radius: 50%;
+    -fx-min-width: 44px;
+    -fx-min-height: 44px;
+    -fx-max-width: 44px;
+    -fx-max-height: 44px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, #00000033, 6, 0, 0, 3);
+    -fx-padding: 0;
+}
+
+.close-button:hover {
+    -fx-background-color: #5a4936;
+    -fx-scale-x: 1.08;
+    -fx-scale-y: 1.08;
+    -fx-effect: dropshadow(gaussian, #00000050, 10, 0, 0, 5);
+}
+
+.close-button:pressed {
+    -fx-background-color: #4a3928;
+    -fx-translate-y: 2;
+    -fx-effect: dropshadow(gaussian, #00000026, 4, 0, 0, 1);
+}
+
+/* Scroll Pane */
+.seed-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.seed-scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.seed-scroll-pane .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-padding: 8 4 8 0;
+}
+
+.seed-scroll-pane .scroll-bar:vertical .track {
+    -fx-background-color: #e8dcc8;
+    -fx-background-radius: 8;
+}
+
+.seed-scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #a0826d;
+    -fx-background-radius: 8;
+}
+
+.seed-scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #8b7355;
+}
+
+/* Seed Grid */
+.seed-grid {
+    -fx-background-color: transparent;
+    -fx-padding: 24;
+}
+
+/* Seed Card - Individual seed item */
+.seed-card {
+    -fx-background-color: linear-gradient(145deg, #ffffff 0%, #f9f6f0 100%);
+    -fx-background-radius: 20;
+    -fx-border-color: #d4c5a9;
+    -fx-border-width: 2;
+    -fx-border-radius: 20;
+    -fx-padding: 20;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, #00000014, 12, 0, 0, 4);
+}
+
+.seed-card:hover {
+    -fx-background-color: linear-gradient(145deg, #fff9f0 0%, #fef5e7 100%);
+    -fx-border-color: #a0826d;
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-effect: dropshadow(gaussian, #00000026, 20, 0, 0, 8);
+}
+
+.seed-card:pressed {
+    -fx-background-color: linear-gradient(145deg, #f5f1e8 0%, #ebe5d8 100%);
+    -fx-translate-y: 2;
+    -fx-effect: dropshadow(gaussian, #00000014, 8, 0, 0, 2);
+}
+
+/* Seed Icon Placeholder */
+.seed-icon {
+    -fx-background-color: linear-gradient(135deg, #8b7355 0%, #a0826d 100%);
+    -fx-background-radius: 16;
+    -fx-min-width: 80px;
+    -fx-min-height: 80px;
+    -fx-max-width: 80px;
+    -fx-max-height: 80px;
+    -fx-effect: innershadow(gaussian, #00000033, 6, 0, 0, 3);
+}
+
+/* Seed Name */
+.seed-name {
+    -fx-font-family: 'Crimson Pro', serif;
+    -fx-font-size: 18px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #4a3928;
+    -fx-letter-spacing: 0.3px;
+}
+
+/* Seed Count Badge */
+.seed-count {
+    -fx-background-color: #6b5744;
+    -fx-background-radius: 12;
+    -fx-padding: 4 12;
+    -fx-effect: dropshadow(gaussian, #00000026, 4, 0, 0, 2);
+}
+
+.seed-count-text {
+    -fx-font-family: 'DM Sans', sans-serif;
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #faf8f3;
+}
+
+/* Seed Info */
+.seed-info {
+    -fx-font-family: 'DM Sans', sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: #8b7355;
+    -fx-opacity: 0.9;
+}
+
+/* Empty State */
+.empty-state {
+    -fx-padding: 60 40;
+}
+
+.empty-state-title {
+    -fx-font-family: 'Crimson Pro', serif;
+    -fx-font-size: 24px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #6b5744;
+    -fx-opacity: 0.7;
+}
+
+.empty-state-subtitle {
+    -fx-font-family: 'DM Sans', sans-serif;
+    -fx-font-size: 15px;
+    -fx-text-fill: #8b7355;
+    -fx-opacity: 0.6;
+}
+
+/* Disabled State */
+.seed-card:disabled {
+    -fx-opacity: 0.5;
+    -fx-cursor: default;
+}
+
+.seed-card:disabled:hover {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+    -fx-effect: dropshadow(gaussian, #00000014, 12, 0, 0, 4);
+}

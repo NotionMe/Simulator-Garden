@@ -184,4 +184,11 @@ public class TileMap {
   public IsometricCoordinates getIsoCoords() {
     return isoCoords;
   }
+
+  public int getTileId(int col, int row) {
+    if (col < 0 || col >= width || row < 0 || row >= height) {
+      return -1;
+    }
+    return tiles[row][col];
+  }
 }

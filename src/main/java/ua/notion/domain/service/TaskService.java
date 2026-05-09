@@ -41,6 +41,9 @@ public class TaskService {
   }
 
   public List<Task> findTasksByPlantInstanceId(Integer plantInstanceId) {
+    if (plantInstanceId == null) {
+      return taskRepository.findAll();
+    }
     return taskRepository.findAll().stream()
         .filter(t -> t.getPlantInstanceId().equals(plantInstanceId))
         .toList();

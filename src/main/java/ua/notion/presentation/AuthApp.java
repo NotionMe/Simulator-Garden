@@ -45,8 +45,10 @@ public class AuthApp extends Application {
 
     primaryStage.setTitle("Garden Simulator - Login");
     primaryStage.setScene(scene);
-    primaryStage.setMinWidth(700);
-    primaryStage.setMinHeight(650);
+    primaryStage.setMinWidth(800);
+    primaryStage.setMinHeight(600);
+    primaryStage.setMaxWidth(1920);
+    primaryStage.setMaxHeight(1080);
     primaryStage.show();
   }
 

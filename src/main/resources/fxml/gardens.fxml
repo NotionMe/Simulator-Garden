@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            stylesheets="@../css/menu.css">
+
+    <!-- Top Bar -->
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="20" styleClass="top-bar">
+            <padding>
+                <Insets top="20" bottom="20" left="30" right="30"/>
+            </padding>
+            <Button fx:id="backButton" onAction="#handleBack" text="← Back" styleClass="secondary-button"/>
+            <Label text="My Gardens" styleClass="title-label">
+                <font>
+                    <Font name="System Bold" size="32"/>
+                </font>
+            </Label>
+        </HBox>
+    </top>
+
+    <!-- Center Content -->
+    <center>
+        <VBox spacing="20">
+            <padding>
+                <Insets top="20" bottom="20" left="30" right="30"/>
+            </padding>
+
+            <!-- Filter Section -->
+            <HBox spacing="15" alignment="CENTER_LEFT">
+                <Label text="Search by Name:">
+                    <font>
+                        <Font size="14"/>
+                    </font>
+                </Label>
+                <TextField fx:id="searchField" promptText="Enter garden name..." prefWidth="250"/>
+                <Button fx:id="searchButton" onAction="#handleSearch" text="Search" styleClass="secondary-button"/>
+                <Button fx:id="clearSearchButton" onAction="#handleClearSearch" text="Clear" styleClass="secondary-button"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button fx:id="addGardenButton" onAction="#handleAddGarden" text="+ New Garden" styleClass="primary-button"/>
+            </HBox>
+
+            <!-- Garden Table -->
+            <TableView fx:id="gardenTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="idColumn" text="ID" prefWidth="50"/>
+                    <TableColumn fx:id="nameColumn" text="Name" prefWidth="200"/>
+                    <TableColumn fx:id="sizeColumn" text="Size (W×H)" prefWidth="120"/>
+                    <TableColumn fx:id="createdAtColumn" text="Created At" prefWidth="180"/>
+                    <TableColumn fx:id="actionsColumn" text="Actions" prefWidth="200"/>
+                </columns>
+                <columnResizePolicy>
+                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                </columnResizePolicy>
+            </TableView>
+        </VBox>
+    </center>
+</BorderPane>

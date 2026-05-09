@@ -102,12 +102,5 @@
         </VBox>
 
         <Region prefHeight="24"/>
-
-        <!-- Footer -->
-        <Label text="© 2026 Garden Simulator" styleClass="footer-text">
-            <font>
-                <Font size="11"/>
-            </font>
-        </Label>
     </VBox>
 </StackPane>
