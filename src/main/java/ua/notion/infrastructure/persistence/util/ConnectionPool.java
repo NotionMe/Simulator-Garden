@@ -32,12 +32,25 @@ public class ConnectionPool {
   }
 
   public static class PoolConfig {
-    private static final String DEFAULT_URL = "jdbc:sqlite:./data/garden.db";
+    private static final String DEFAULT_URL = getDefaultDatabaseUrl();
 
     private final String url;
 
     private PoolConfig(Builder builder) {
       this.url = builder.url;
+    }
+
+    private static String getDefaultDatabaseUrl() {
+      String userHome = System.getProperty("user.home");
+      String appDir = userHome + "/.garden-simulator/data";
+
+      // Create directory if it doesn't exist
+      java.io.File dir = new java.io.File(appDir);
+      if (!dir.exists()) {
+        dir.mkdirs();
+      }
+
+      return "jdbc:sqlite:" + appDir + "/garden.db";
     }
 
     public static PoolConfig fromProperties(Properties properties) {

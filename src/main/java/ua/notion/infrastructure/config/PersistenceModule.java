@@ -3,6 +3,7 @@ package ua.notion.infrastructure.config;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import java.io.File;
 import ua.notion.infrastructure.persistence.PersistenceContext;
 import ua.notion.infrastructure.persistence.contract.AchievementRepository;
 import ua.notion.infrastructure.persistence.contract.GardenRepository;
@@ -24,13 +25,25 @@ public class PersistenceModule extends AbstractModule {
   @Provides
   @Singleton
   ConnectionPool provideConnectionPool() {
-    String databaseUrl = System.getProperty("db.url", "jdbc:sqlite:./data/garden.db");
+    String databaseUrl = System.getProperty("db.url", getDefaultDatabasePath());
     DatabaseInitializer.ensureDatabase(databaseUrl);
 
     ConnectionPool.PoolConfig config =
         new ConnectionPool.PoolConfig.Builder().withUrl(databaseUrl).build();
 
     return new ConnectionPool(config);
+  }
+
+  private String getDefaultDatabasePath() {
+    String userHome = System.getProperty("user.home");
+    String appDir = userHome + "/.garden-simulator/data";
+
+    File dir = new File(appDir);
+    if (!dir.exists()) {
+      dir.mkdirs();
+    }
+
+    return "jdbc:sqlite:" + appDir + "/garden.db";
   }
 
   @Provides
