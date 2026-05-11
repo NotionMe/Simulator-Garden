@@ -60,7 +60,7 @@ jobs:
               --vendor "Notion" `
               --input jpackage-input/ `
               --main-jar garden-simulator-1.0.0-jar-with-dependencies.jar `
-              --main-class ua.notion.presentation.GardenSimulatorApp `
+              --main-class ua.notion.Launcher `
               --icon packaging/windows/garden-simulator.ico `
               --dest dist/ `
               --win-dir-chooser `
@@ -74,7 +74,7 @@ jobs:
               --vendor "Notion" `
               --input jpackage-input/ `
               --main-jar garden-simulator-1.0.0-jar-with-dependencies.jar `
-              --main-class ua.notion.presentation.GardenSimulatorApp `
+              --main-class ua.notion.Launcher `
               --dest dist/ `
               --win-dir-chooser `
               --win-menu `

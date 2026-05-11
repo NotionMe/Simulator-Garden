@@ -171,7 +171,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
-                    <mainClass>ua.notion.presentation.GardenSimulatorApp</mainClass>
+                    <mainClass>ua.notion.Launcher</mainClass>
                 </configuration>
             </plugin>
 
@@ -193,7 +193,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>ua.notion.presentation.GardenSimulatorApp</mainClass>
+                            <mainClass>ua.notion.Launcher</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
@@ -219,7 +219,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>ua.notion.presentation.GardenSimulatorApp</mainClass>
+                            <mainClass>ua.notion.Launcher</mainClass>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>libs/</classpathPrefix>
                         </manifest>
@@ -259,7 +259,7 @@
                     <destination>${project.build.directory}/dist</destination>
                     <input>${project.build.directory}/libs</input>
                     <mainJar>${project.build.finalName}.jar</mainJar>
-                    <mainClass>ua.notion.presentation.GardenSimulatorApp</mainClass>
+                    <mainClass>ua.notion.Launcher</mainClass>
                     <javaOptions>
                         <option>-Dfile.encoding=UTF-8</option>
                     </javaOptions>

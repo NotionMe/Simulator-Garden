@@ -64,7 +64,7 @@ call jpackage ^
   --input target ^
   --name GardenSimulator ^
   --main-jar garden-simulator-1.0.0-jar-with-dependencies.jar ^
-  --main-class ua.notion.presentation.GardenSimulatorApp ^
+  --main-class ua.notion.Launcher ^
   --type msi ^
   --dest target/dist ^
   --app-version 1.0.0 ^
