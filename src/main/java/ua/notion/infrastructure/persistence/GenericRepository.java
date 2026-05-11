@@ -423,7 +423,8 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
         String columnName = camelCaseToSnakeCase(field.getName());
         Object value = rs.getObject(columnName);
         if (value != null) {
-          field.set(entity, convertValue(value, field.getType()));
+          Object converted = convertValue(value, field.getType());
+          field.set(entity, converted);
         }
       }
       return entity;
@@ -459,7 +460,18 @@ public abstract class GenericRepository<T, ID> implements Repository<T, ID> {
         }
         yield null;
       }
-      case "java.time.LocalDate" -> value instanceof Date ? ((Date) value).toLocalDate() : null;
+      case "java.time.LocalDate" -> {
+        if (value instanceof Date) {
+          yield ((Date) value).toLocalDate();
+        } else if (value instanceof String) {
+          yield LocalDate.parse(value.toString());
+        } else if (value instanceof Number) {
+          yield java.time.Instant.ofEpochMilli(((Number) value).longValue())
+              .atZone(java.time.ZoneId.systemDefault())
+              .toLocalDate();
+        }
+        yield null;
+      }
       default -> value;
     };
   }

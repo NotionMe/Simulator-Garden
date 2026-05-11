@@ -93,4 +93,17 @@ public class TestDatabaseManager {
   public ConnectionPool getConnectionPool() {
     return connectionPool;
   }
+
+  public PersistenceContext createContext() {
+    try {
+      setup();
+      return new PersistenceContext(connectionPool);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to create test context", e);
+    }
+  }
+
+  public void cleanup() {
+    teardown();
+  }
 }
