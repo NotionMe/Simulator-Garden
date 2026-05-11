@@ -166,19 +166,76 @@ jobs:
         with:
           name: "Garden Simulator ${{ github.ref_name }}"
           body: |
-            ## Що нового у ${{ github.ref_name }}
+            ## 🌱 Garden Simulator - Initial Release
 
-            Опис змін цього релізу.
+            Перший реліз Garden Simulator - симулятора управління садом з JavaFX інтерфейсом.
 
-            ## Завантаження
+            ### ✨ Основні можливості
 
-            | Операційна система / Платформа | Файл |
-            |---|---|
-            | Windows 10/11 | `*.msi` |
-            | macOS 12+ | `*.dmg` |
-            | Ubuntu/Debian | `*.deb` |
-            | RedHat/Fedora | `*.rpm` |
-            | Будь-яка (з встановленою JRE 21+) | `*.jar` |
+            - 🔐 **Автентифікація** - система реєстрації та входу користувачів
+            - 🏡 **Управління садами** - створення та керування власними садами
+            - 🌿 **Каталог рослин** - перегляд та управління рослинами
+            - ✅ **Система завдань** - трекінг задач та прогресу
+            - 🏆 **Досягнення** - система нагород та досягнень
+            - 💾 **SQLite база даних** - локальне зберігання даних з міграціями
+            - 🎨 **Сучасний UI** - JavaFX з AtlantaFX темою
+
+            ### 🛠 Технічний стек
+
+            - Java 21
+            - JavaFX 21.0.2
+            - SQLite 3.45.3.0
+            - Google Guice 7.0.0 (Dependency Injection)
+            - MVVM архітектура
+            - Repository pattern з Unit of Work
+
+            ### 📦 Завантаження
+
+            | Операційна система | Файл | Опис |
+            |---|---|---|
+            | 🪟 Windows 10/11 | `*.msi` | MSI інсталятор з ярликами |
+            | 🍎 macOS 12+ | `*.dmg` | DMG образ для drag-and-drop |
+            | 🐧 Ubuntu/Debian | `*.deb` | DEB пакет |
+            | 🐧 Fedora/RedHat | `*.rpm` | RPM пакет |
+            | ☕ Будь-яка платформа | `*.jar` | Потрібна JRE 21+ |
+
+            ### 📝 Встановлення
+
+            **Windows:**
+            ```bash
+            # Завантажте .msi файл та запустіть інсталятор
+            ```
+
+            **macOS:**
+            ```bash
+            # Відкрийте .dmg та перетягніть додаток у Applications
+            ```
+
+            **Linux (Ubuntu/Debian):**
+            ```bash
+            sudo dpkg -i garden-simulator_*.deb
+            ```
+
+            **Linux (Fedora/RedHat):**
+            ```bash
+            sudo rpm -i garden-simulator-*.rpm
+            ```
+
+            **Universal JAR:**
+            ```bash
+            java -jar garden-simulator-*-jar-with-dependencies.jar
+            ```
+
+            ### 🐛 Відомі проблеми
+
+            Поки що не виявлено.
+
+            ### 🚀 Плани на майбутнє
+
+            - Ігрова механіка та симуляція росту рослин
+            - Система погоди
+            - Мультиплеєр підтримка
+            - Більше типів рослин та садів
           files: installers/**
           draft: false
           prerelease: false
