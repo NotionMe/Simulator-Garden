@@ -1,0 +1,184 @@
+name: Release — Build Installers
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-installers:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Install WiX Toolset (Windows only)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install wixtoolset --yes
+
+      - name: Install RPM packaging tools (Linux only)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm
+
+      - name: Build Fat JAR with dependencies
+        run: mvn clean package -DskipTests
+
+      - name: Prepare jpackage input
+        run: |
+          mkdir -p jpackage-input
+          cp target/garden-simulator-1.0.0-jar-with-dependencies.jar jpackage-input/
+
+      - name: Extract version from tag
+        id: version
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Package installer (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          if (Test-Path "packaging/windows/garden-simulator.ico") {
+            jpackage `
+              --type msi `
+              --name "Garden Simulator" `
+              --app-version "${{ steps.version.outputs.VERSION }}" `
+              --vendor "Notion" `
+              --input jpackage-input/ `
+              --main-jar garden-simulator-1.0.0-jar-with-dependencies.jar `
+              --main-class ua.notion.presentation.GardenSimulatorApp `
+              --icon packaging/windows/garden-simulator.ico `
+              --dest dist/ `
+              --win-dir-chooser `
+              --win-menu `
+              --win-shortcut
+          } else {
+            jpackage `
+              --type msi `
+              --name "Garden Simulator" `
+              --app-version "${{ steps.version.outputs.VERSION }}" `
+              --vendor "Notion" `
+              --input jpackage-input/ `
+              --main-jar garden-simulator-1.0.0-jar-with-dependencies.jar `
+              --main-class ua.notion.presentation.GardenSimulatorApp `
+              --dest dist/ `
+              --win-dir-chooser `
+              --win-menu `
+              --win-shortcut
+          }
+
+      - name: Package installer (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          if [ -f "packaging/macos/garden-simulator.icns" ]; then
+            jpackage \
+              --type dmg \
+              --name "Garden Simulator" \
+              --app-version "${{ steps.version.outputs.VERSION }}" \
+              --vendor "Notion" \
+              --input jpackage-input/ \
+              --main-jar garden-simulator-1.0.0-jar-with-dependencies.jar \
+              --main-class ua.notion.presentation.GardenSimulatorApp \
+              --icon packaging/macos/garden-simulator.icns \
+              --dest dist/
+          else
+            jpackage \
+              --type dmg \
+              --name "Garden Simulator" \
+              --app-version "${{ steps.version.outputs.VERSION }}" \
+              --vendor "Notion" \
+              --input jpackage-input/ \
+              --main-jar garden-simulator-1.0.0-jar-with-dependencies.jar \
+              --main-class ua.notion.presentation.GardenSimulatorApp \
+              --dest dist/
+          fi
+
+      - name: Package installer (Linux DEB & RPM)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          ICON_FLAG=""
+          if [ -f "packaging/linux/garden-simulator.png" ]; then
+            ICON_FLAG="--icon packaging/linux/garden-simulator.png"
+          fi
+
+          jpackage \
+            --type deb \
+            --name "garden-simulator" \
+            --app-version "${{ steps.version.outputs.VERSION }}" \
+            --vendor "Notion" \
+            --input jpackage-input/ \
+            --main-jar garden-simulator-1.0.0-jar-with-dependencies.jar \
+            --main-class ua.notion.presentation.GardenSimulatorApp \
+            $ICON_FLAG \
+            --dest dist/ \
+            --linux-shortcut
+
+          jpackage \
+            --type rpm \
+            --name "garden-simulator" \
+            --app-version "${{ steps.version.outputs.VERSION }}" \
+            --vendor "Notion" \
+            --input jpackage-input/ \
+            --main-jar garden-simulator-1.0.0-jar-with-dependencies.jar \
+            --main-class ua.notion.presentation.GardenSimulatorApp \
+            $ICON_FLAG \
+            --dest dist/ \
+            --linux-shortcut
+
+          cp target/garden-simulator-1.0.0-jar-with-dependencies.jar dist/
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.os }}
+          path: dist/
+          retention-days: 1
+
+  publish-release:
+    needs: build-installers
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all installer artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: installers/
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Garden Simulator ${{ github.ref_name }}"
+          body: |
+            ## Що нового у ${{ github.ref_name }}
+
+            Опис змін цього релізу.
+
+            ## Завантаження
+
+            | Операційна система / Платформа | Файл |
+            |---|---|
+            | Windows 10/11 | `*.msi` |
+            | macOS 12+ | `*.dmg` |
+            | Ubuntu/Debian | `*.deb` |
+            | RedHat/Fedora | `*.rpm` |
+            | Будь-яка (з встановленою JRE 21+) | `*.jar` |
+          files: installers/**
+          draft: false
+          prerelease: false

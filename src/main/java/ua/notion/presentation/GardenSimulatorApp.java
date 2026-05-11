@@ -8,18 +8,16 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import ua.notion.domain.entity.User;
 import ua.notion.domain.service.auth.AuthenticationService;
 import ua.notion.infrastructure.config.PersistenceModule;
 import ua.notion.infrastructure.config.ServiceModule;
-import ua.notion.presentation.controller.GameController;
+import ua.notion.infrastructure.persistence.PersistenceContext;
 import ua.notion.presentation.controller.auth.LoginController;
 
-public class JavaFXApp extends Application {
+public class GardenSimulatorApp extends Application {
 
   private Injector injector;
   private Stage primaryStage;
-  private User currentUser;
 
   @Override
   public void init() {
@@ -40,14 +38,6 @@ public class JavaFXApp extends Application {
     AuthenticationService authService = injector.getInstance(AuthenticationService.class);
     LoginController controller = new LoginController(authService);
     controller.setStage(primaryStage);
-    controller.setOnLoginSuccess(
-        () -> {
-          try {
-            showGameScreen();
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        });
 
     loader.setController(controller);
 
@@ -55,37 +45,17 @@ public class JavaFXApp extends Application {
     Scene scene = new Scene(root, 800, 700);
     scene.getStylesheets().add(getClass().getResource("/css/auth.css").toExternalForm());
 
-    primaryStage.setTitle("Garden Simulator - Login");
-    primaryStage.setScene(scene);
-    primaryStage.setMinWidth(700);
-    primaryStage.setMinHeight(650);
-    primaryStage.show();
-  }
-
-  private void showGameScreen() throws Exception {
-    FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/game.fxml"));
-    Parent root = loader.load();
-
-    Scene scene = new Scene(root);
     primaryStage.setTitle("Garden Simulator");
     primaryStage.setScene(scene);
-    primaryStage.setResizable(false);
-
-    // Handle window close
-    primaryStage.setOnCloseRequest(
-        event -> {
-          GameController controller = loader.getController();
-          if (controller != null) {
-            controller.shutdown();
-          }
-        });
+    primaryStage.setMinWidth(800);
+    primaryStage.setMinHeight(700);
+    primaryStage.show();
   }
 
   @Override
   public void stop() {
     if (injector != null) {
-      var context =
-          injector.getInstance(ua.notion.infrastructure.persistence.PersistenceContext.class);
+      PersistenceContext context = injector.getInstance(PersistenceContext.class);
       if (context != null) {
         context.close();
       }

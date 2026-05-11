@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#4CAF50" stroke="#2E7D32" stroke-width="8"/>
+
+  <!-- Plant stem -->
+  <rect x="240" y="300" width="32" height="150" fill="#8D6E63" rx="4"/>
+
+  <!-- Leaves -->
+  <!-- Left leaf -->
+  <ellipse cx="180" cy="260" rx="60" ry="60" fill="#66BB6A" stroke="#2E7D32" stroke-width="4" transform="rotate(-30 180 260)"/>
+
+  <!-- Right leaf -->
+  <ellipse cx="332" cy="260" rx="60" ry="60" fill="#66BB6A" stroke="#2E7D32" stroke-width="4" transform="rotate(30 332 260)"/>
+
+  <!-- Top leaf -->
+  <ellipse cx="256" cy="180" rx="56" ry="60" fill="#81C784" stroke="#2E7D32" stroke-width="4"/>
+
+  <!-- Flower on top -->
+  <circle cx="256" cy="150" r="30" fill="#FFD54F" stroke="#FFA000" stroke-width="3"/>
+  <circle cx="256" cy="150" r="12" fill="#FF6F00"/>
+</svg>
