@@ -1,3 +1,9 @@
 docs
 db
 .env
+
+# Rust
+target/
+Cargo.lock
+**/*.rs.bk
+*.pdb
