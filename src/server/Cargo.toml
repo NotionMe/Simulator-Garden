@@ -25,7 +25,6 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Error Handling
 thiserror = "1"
-anyhow = "1"
 
 # Async utilities
 futures = "0.3"
@@ -46,3 +45,6 @@ tokio-test = "0.4"
 
 #Environment
 dotenv = "0.15.0"
+
+#async
+async-trait = "0.1.89"
