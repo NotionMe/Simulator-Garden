@@ -7,8 +7,6 @@ use super::enums::ClimateType;
 pub struct Plant {
     pub id: i32,
     pub name: String,
-    pub first_name: String,
-    pub last_name: String,
     pub species: String,
     pub growth_days: i32,
     pub climate_type: ClimateType,

@@ -10,6 +10,15 @@ pub enum DatabaseError {
     #[error("Could not connect to database: {0}")]
     ConnectionFailed(#[from] sqlx::Error),
 
+    #[error("Failed to save record to database")]
+    FailedToSave,
+
+    #[error("Failed to delete record to database")]
+    FailedToDelete,
+
+    #[error("Failed to update database")]
+    FailedToUpdate,
+
     #[error("Record not found")]
     NotFound,
 }

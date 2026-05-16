@@ -3,6 +3,7 @@ mod errors;
 mod handlers;
 mod models;
 mod state;
+mod repositories;
 
 use state::app_state::AppState;
 use tracing::info;
@@ -31,7 +32,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .fetch_all(&mut *conn)
         .await?;
 
-    info!("Users: {:?}", query_user.get(1));
+    info!("Users: {:?}", query_user.first().map(|u| u.email == ""));
 
     Ok(())
 }

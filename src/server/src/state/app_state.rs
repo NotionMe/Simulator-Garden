@@ -24,6 +24,6 @@ impl AppState {
         Ok(Self {
             db_pool: pool,
             active_connections: Arc::new(Mutex::new(HashMap::new())),
-        })
+        }) // Hello World!
     }
 }

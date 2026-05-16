@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
@@ -9,7 +9,7 @@ pub struct PlantInstance {
     pub plant_id: i32,
     pub cell_x: i32,
     pub cell_y: i32,
-    pub planted_at: NaiveDate,
+    pub planted_at: NaiveDateTime,
     pub growth_stage: i32,
     pub is_watered: bool,
     pub is_fertilized: bool,

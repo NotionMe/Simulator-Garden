@@ -2,7 +2,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::Type;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
-#[sqlx(type_name = "text", rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
+#[sqlx(type_name = "text", rename_all = "snake_case")]
 pub enum TaskType {
     Water,
     Fertilize,
@@ -12,7 +13,8 @@ pub enum TaskType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
-#[sqlx(type_name = "text", rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
+#[sqlx(type_name = "text", rename_all = "snake_case")]
 pub enum ClimateType {
     Tropical,
     Temperate,
@@ -22,7 +24,8 @@ pub enum ClimateType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
-#[sqlx(type_name = "text", rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
+#[sqlx(type_name = "text", rename_all = "snake_case")]
 pub enum EventType {
     Rain,
     Sun,
