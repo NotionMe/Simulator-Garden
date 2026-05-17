@@ -1,23 +1,18 @@
-use server::{
-    repositories::user_repository::{PgUserRepository, UserRepository},
-    state::app_state::AppState,
-};
-use tracing::info;
+use axum::{Router, routing::get};
+use server::{handlers::ws_handler, state::app_state::AppState};
+use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt().init();
 
-    // Initialize application state
     let app_state = AppState::new().await?;
 
-    let user_repo = PgUserRepository::new(app_state.db_pool);
+    let app = Router::new()
+        .route("/server/ws", get(ws_handler::handler))
+        .with_state(app_state);
 
-    let exist_by_usr = user_repo.exists_by_username("john_doe").await?;
-    info!("find usr: {}", exist_by_usr);
-
-    let exist_by_email = user_repo.exists_by_email("john@example.com").await?;
-    info!("find usr: {}", exist_by_email);
-
+    let listener = TcpListener::bind("127.0.0.1:3000").await?;
+    axum::serve(listener, app).await?;
     Ok(())
 }

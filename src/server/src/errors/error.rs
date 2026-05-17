@@ -26,6 +26,9 @@ pub enum DatabaseError {
 pub type DbResult<T> = std::result::Result<T, DatabaseError>;
 
 #[derive(Error, Debug)]
+pub enum WebSocketError {
+    #[error("Failed parse message")]
+    FailedParseMessage,
+}
 
-pub enum WebSocketError {}
 pub type WsResult<T> = std::result::Result<T, WebSocketError>;
