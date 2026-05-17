@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use sqlx::PgPool;
-use tracing::info;
 
 use crate::{errors::error::DbResult, models::User, repositories::repository::Repository};
 
@@ -48,7 +47,7 @@ impl Repository<User, i32> for PgUserRepository {
     }
 
     async fn find_by_id(&self, id: i32) -> DbResult<Option<User>> {
-        let sql = "SELECT id FROM users WHERE id = $1";
+        let sql = "SELECT * FROM users WHERE id = $1";
 
         let find = sqlx::query_as::<_, User>(sql)
             .bind(id)
@@ -66,7 +65,8 @@ impl Repository<User, i32> for PgUserRepository {
                     email =  COALESCE($2, email),
                     password_hash =  COALESCE($3, password_hash),
                     created_at = COALESCE($4, created_at)
-            WHERE id = $5"#;
+            WHERE id = $5
+            RETURNING *"#;
 
         let update = sqlx::query_as::<_, User>(sql)
             .bind(object.username)
@@ -85,29 +85,48 @@ impl Repository<User, i32> for PgUserRepository {
 
         let delete = sqlx::query(sql).bind(id).execute(&self.pool).await?;
 
-        if delete.rows_affected() == 1 {
-            return Ok(true);
-        } else {
-            return Ok(false);
-        }
+        Ok(delete.rows_affected() == 1)
     }
 }
 
 #[async_trait]
 impl UserRepository for PgUserRepository {
     async fn find_by_username(&self, username: &str) -> DbResult<Option<User>> {
-        todo!()
+        let sql = "SELECT * FROM users WHERE username = $1";
+
+        let find = sqlx::query_as::<_, User>(sql)
+            .bind(username)
+            .fetch_optional(&self.pool)
+            .await?;
+
+        Ok(find)
     }
 
     async fn find_by_email(&self, email: &str) -> DbResult<Option<User>> {
-        todo!()
+        let sql = "SELECT * FROM users WHERE email = $1";
+
+        let find = sqlx::query_as::<_, User>(sql)
+            .bind(email)
+            .fetch_optional(&self.pool)
+            .await?;
+        Ok(find)
     }
 
     async fn exists_by_username(&self, username: &str) -> DbResult<bool> {
-        todo!()
+        let search = self.find_by_username(username).await?;
+
+        return match search {
+            Some(_) => Ok(true),
+            None => Ok(false),
+        };
     }
 
     async fn exists_by_email(&self, email: &str) -> DbResult<bool> {
-        todo!()
+        let search = self.find_by_email(email).await?;
+
+        return match search {
+            Some(_) => Ok(true),
+            None => Ok(false),
+        };
     }
 }
