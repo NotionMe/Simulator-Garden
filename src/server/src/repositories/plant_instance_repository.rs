@@ -152,7 +152,8 @@ impl PlantInstanceRepository for PgPlantInstanceRepository {
         cell_x: i32,
         cell_y: i32,
     ) -> DbResult<Option<PlantInstance>> {
-        let sql = "SELECT * FROM plant_instances WHERE garden_id = $1 AND cell_x = $2 AND cell_y = $3";
+        let sql =
+            "SELECT * FROM plant_instances WHERE garden_id = $1 AND cell_x = $2 AND cell_y = $3";
 
         let found = sqlx::query_as::<_, PlantInstance>(sql)
             .bind(garden_id)

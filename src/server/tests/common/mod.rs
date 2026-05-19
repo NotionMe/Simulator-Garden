@@ -3,8 +3,8 @@ use sqlx::PgPool;
 pub async fn setup_pool() -> PgPool {
     dotenv::dotenv().ok();
 
-    let database_url = std::env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set for integration tests");
+    let database_url =
+        std::env::var("DATABASE_URL").expect("DATABASE_URL must be set for integration tests");
 
     let pool = PgPool::connect(&database_url)
         .await

@@ -137,7 +137,8 @@ impl AchievementRepository for PgAchievementRepository {
         user_id: i32,
         condition_key: &str,
     ) -> DbResult<bool> {
-        let sql = "SELECT EXISTS(SELECT 1 FROM achievements WHERE user_id = $1 AND condition_key = $2)";
+        let sql =
+            "SELECT EXISTS(SELECT 1 FROM achievements WHERE user_id = $1 AND condition_key = $2)";
 
         let exists = sqlx::query_scalar::<_, bool>(sql)
             .bind(user_id)

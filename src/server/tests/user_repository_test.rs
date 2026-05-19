@@ -31,7 +31,10 @@ async fn create_and_find_by_id_should_work() {
         .await
         .expect("create failed");
 
-    let found = repo.find_by_id(created.id).await.expect("find_by_id failed");
+    let found = repo
+        .find_by_id(created.id)
+        .await
+        .expect("find_by_id failed");
     let found = found.expect("Expected user to exist");
 
     assert_eq!(found.username, "u_create_id");

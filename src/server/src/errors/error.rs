@@ -1,5 +1,7 @@
 use thiserror::Error;
 
+use crate::errors::error;
+
 #[derive(Error, Debug)]
 pub enum AppError {}
 
@@ -27,8 +29,25 @@ pub type DbResult<T> = std::result::Result<T, DatabaseError>;
 
 #[derive(Error, Debug)]
 pub enum WebSocketError {
-    #[error("Failed parse message")]
-    FailedParseMessage,
+    #[error("Failed parse message {0}")]
+    FailedParseMessage(#[from] serde_json::Error),
 }
 
 pub type WsResult<T> = std::result::Result<T, WebSocketError>;
+
+#[derive(Error, Debug)]
+pub enum CommandError {
+    #[error("Failed create object")]
+    FailedToCreate,
+
+    #[error("Failed read object")]
+    FailedToRead,
+
+    #[error("Failed update object")]
+    FailedToUpdate,
+
+    #[error("Failed delete object")]
+    FailedToDelete,
+}
+
+pub type CmResult<T> = std::result::Result<T, CommandError>;

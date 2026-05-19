@@ -1,26 +1,60 @@
 use axum::{
     extract::{
-        State, WebSocketUpgrade,
         ws::{Message, WebSocket},
+        State, WebSocketUpgrade,
     },
     response::IntoResponse,
 };
 
-use crate::state::app_state::AppState;
+use crate::{
+    handlers::{
+        dispatcher::dispatch_request,
+        messages::{RequestMessage, ResponseMessage, ResponseStatus},
+    },
+    state::app_state::AppState,
+};
 
-async fn handle_socket(mut socket: WebSocket, app_state: AppState) {
+pub async fn handle_socket(mut socket: WebSocket, state: AppState) {
     while let Some(Ok(msg)) = socket.recv().await {
-        match msg {
-            Message::Text(text) => {
-                println!("Received: {}", text);
-                // TODO хендлити
-                if socket.send(Message::Text(text)).await.is_err() {
-                    break; // Connection close!
+        if let Message::Text(text) = msg {
+            let request = match serde_json::from_str::<RequestMessage>(&text) {
+                Ok(request) => request,
+                Err(err) => {
+                    let response = ResponseMessage {
+                        request_id: None,
+                        status: ResponseStatus::Error,
+                        command: crate::handlers::messages::CommandType::Read,
+                        data: None,
+                        error: Some(format!("Invalid request message: {}", err)),
+                    };
+
+                    let _ = socket
+                        .send(Message::Text(
+                            serde_json::to_string(&response).unwrap_or_default(),
+                        ))
+                        .await;
+
+                    continue;
                 }
-            }
-            Message::Binary(_) => println!("Received binary data"),
-            Message::Close(_) => break,
-            _ => (),
+            };
+
+            let response = dispatch_request(request, state.clone()).await;
+
+            let response_text = match serde_json::to_string(&response) {
+                Ok(text) => text,
+                Err(err) => {
+                    let error_response = ResponseMessage {
+                        request_id: response.request_id,
+                        status: ResponseStatus::Error,
+                        command: response.command,
+                        data: None,
+                        error: Some(format!("Failed to serialize response: {}", err)),
+                    };
+                    serde_json::to_string(&error_response).unwrap_or_default()
+                }
+            };
+
+            let _ = socket.send(Message::Text(response_text)).await;
         }
     }
 }
