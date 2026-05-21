@@ -6,7 +6,6 @@ import java.util.concurrent.CompletableFuture;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import ua.notion.infrastructure.async.AsyncExecutor;
-import ua.notion.presentation.game.GameConstants;
 import ua.notion.presentation.game.assets.GardenTileAtlas;
 import ua.notion.presentation.game.assets.PlantBasesAtlas.PlantType;
 import ua.notion.presentation.game.plant.PlantManager;
@@ -19,7 +18,7 @@ public class TileMap {
   private final List<MapObject> objects;
 
   private Image[] tileImages;
-  private IsometricCoordinates isoCoords;
+  private OrthogonalCoordinates orthoCoords;
   private boolean isLoaded = false;
 
   public TileMap(int width, int height) {
@@ -28,9 +27,7 @@ public class TileMap {
     this.tiles = new int[height][width];
     this.objects = new ArrayList<>();
 
-    this.isoCoords =
-        new IsometricCoordinates(
-            GardenTileAtlas.BLOCK_TILE_WIDTH, GardenTileAtlas.BLOCK_TILE_HEIGHT);
+    this.orthoCoords = new OrthogonalCoordinates(48, 48);
   }
 
   public CompletableFuture<Void> loadAsync() {
@@ -47,38 +44,45 @@ public class TileMap {
   }
 
   private void loadTiles() {
-    System.out.println("Loading isometric garden tiles...");
+    System.out.println("Loading top-down garden tiles...");
 
-    Image blocksSpritesheet = ResourceLoader.loadImage(GardenTileAtlas.BLOCKS_SPRITE_PATH);
+    Image tilemapSheet = ResourceLoader.loadImage(GardenTileAtlas.SPRING_TILEMAP_PATH);
 
     tileImages = new Image[20];
 
-    tileImages[0] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.GRASS_1);
-    tileImages[1] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.GRASS_2);
-    tileImages[2] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.GRASS_3);
-    tileImages[3] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.GRASS_4);
+    // Solid grass tiles (Row 3, Row 4 cols 0-1)
+    tileImages[0] = ResourceLoader.extractTile(tilemapSheet, 0, 3, 16);
+    tileImages[1] = ResourceLoader.extractTile(tilemapSheet, 1, 3, 16);
+    tileImages[2] = ResourceLoader.extractTile(tilemapSheet, 0, 4, 16);
+    tileImages[3] = ResourceLoader.extractTile(tilemapSheet, 1, 4, 16);
 
-    tileImages[4] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.DIRT_1);
-    tileImages[5] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.DIRT_2);
-    tileImages[6] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.DIRT_3);
-    tileImages[7] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.DIRT_4);
+    // Solid pathway/dirt tiles (Row 11, Row 12 cols 0-1)
+    tileImages[4] = ResourceLoader.extractTile(tilemapSheet, 0, 11, 16);
+    tileImages[5] = ResourceLoader.extractTile(tilemapSheet, 1, 11, 16);
+    tileImages[6] = ResourceLoader.extractTile(tilemapSheet, 0, 12, 16);
+    tileImages[7] = ResourceLoader.extractTile(tilemapSheet, 1, 12, 16);
 
-    tileImages[8] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.GARDEN_BED_1);
-    tileImages[9] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.GARDEN_BED_2);
-    tileImages[10] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.GARDEN_BED_3);
-    tileImages[11] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.GARDEN_BED_4);
+    // Solid garden bed / tilled soil tiles (Row 10 cols 0-3)
+    tileImages[8] = ResourceLoader.extractTile(tilemapSheet, 0, 10, 16);
+    tileImages[9] = ResourceLoader.extractTile(tilemapSheet, 1, 10, 16);
+    tileImages[10] = ResourceLoader.extractTile(tilemapSheet, 2, 10, 16);
+    tileImages[11] = ResourceLoader.extractTile(tilemapSheet, 3, 10, 16);
 
-    tileImages[12] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.WATER_1);
-    tileImages[13] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.WATER_2);
-    tileImages[14] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.STONE_1);
-    tileImages[15] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.STONE_2);
+    // Solid water tiles (Row 8 col 8, Row 9 col 8)
+    tileImages[12] = ResourceLoader.extractTile(tilemapSheet, 8, 8, 16);
+    tileImages[13] = ResourceLoader.extractTile(tilemapSheet, 8, 9, 16);
 
-    tileImages[16] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.BLOCK_5_1);
-    tileImages[17] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.BLOCK_5_2);
-    tileImages[18] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.BLOCK_5_3);
-    tileImages[19] = ResourceLoader.extractTile(blocksSpritesheet, GardenTileAtlas.BLOCK_5_4);
+    // Solid stone/rock tiles (Row 8 cols 0-1)
+    tileImages[14] = ResourceLoader.extractTile(tilemapSheet, 0, 8, 16);
+    tileImages[15] = ResourceLoader.extractTile(tilemapSheet, 1, 8, 16);
 
-    System.out.println("Loaded " + tileImages.length + " isometric tiles");
+    // Other solid blocks/obstacles (Row 8, Row 9 cols 2-3)
+    tileImages[16] = ResourceLoader.extractTile(tilemapSheet, 2, 8, 16);
+    tileImages[17] = ResourceLoader.extractTile(tilemapSheet, 3, 8, 16);
+    tileImages[18] = ResourceLoader.extractTile(tilemapSheet, 2, 9, 16);
+    tileImages[19] = ResourceLoader.extractTile(tilemapSheet, 3, 9, 16);
+
+    System.out.println("Loaded " + tileImages.length + " top-down 16x16 tiles");
   }
 
   private void generateParkMap() {
@@ -134,28 +138,20 @@ public class TileMap {
     System.out.println("Added 5 test plants");
   }
 
-  public void render(GraphicsContext gc) {
+  public void render(GraphicsContext gc, double offsetX, double offsetY) {
     if (!isLoaded) {
       return;
     }
-
-    double offsetX = GameConstants.MAP_OFFSET_X;
-    double offsetY = GameConstants.MAP_OFFSET_Y;
 
     for (int row = 0; row < height; row++) {
       for (int col = 0; col < width; col++) {
         int tileId = tiles[row][col];
 
         if (tileId >= 0 && tileId < tileImages.length) {
-          double screenX = isoCoords.toScreenX(col, row) + offsetX;
-          double screenY = isoCoords.toScreenY(col, row) + offsetY;
+          double screenX = orthoCoords.toScreenX(col, row) + offsetX;
+          double screenY = orthoCoords.toScreenY(col, row) + offsetY;
 
-          gc.drawImage(
-              tileImages[tileId],
-              screenX,
-              screenY,
-              GardenTileAtlas.BLOCK_TILE_WIDTH * 1.5,
-              GardenTileAtlas.BLOCK_TILE_HEIGHT * 1.5);
+          gc.drawImage(tileImages[tileId], screenX, screenY, 48.0, 48.0);
         }
       }
     }
@@ -181,8 +177,8 @@ public class TileMap {
     return height;
   }
 
-  public IsometricCoordinates getIsoCoords() {
-    return isoCoords;
+  public OrthogonalCoordinates getOrthoCoords() {
+    return orthoCoords;
   }
 
   public int getTileId(int col, int row) {

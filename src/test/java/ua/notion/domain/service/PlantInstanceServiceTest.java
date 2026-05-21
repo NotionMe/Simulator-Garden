@@ -192,9 +192,7 @@ class PlantInstanceServiceTest {
     assertFalse(plantInstanceService.isReadyToHarvest(instance.getId()));
 
     instance.setGrowthStage(5);
-    context.beginTransaction();
     context.getPlantInstanceRepository().update(instance.getId(), instance);
-    context.commitTransaction();
 
     assertTrue(plantInstanceService.isReadyToHarvest(instance.getId()));
   }
@@ -205,9 +203,7 @@ class PlantInstanceServiceTest {
         plantInstanceService.plantSeed(testGarden.getId(), testPlant.getId(), 7, 7);
 
     instance.setGrowthStage(5);
-    context.beginTransaction();
     context.getPlantInstanceRepository().update(instance.getId(), instance);
-    context.commitTransaction();
 
     plantInstanceService.harvestPlant(instance.getId());
 

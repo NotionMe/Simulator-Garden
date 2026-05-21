@@ -5,21 +5,19 @@ import javafx.scene.image.Image;
 import ua.notion.presentation.game.map.TileMap;
 
 public class Player {
-  private static final double SPEED = 80.0;
-  private static final int SPRITE_WIDTH = 130;
-  private static final int SPRITE_HEIGHT = 160;
+  private static final double SPEED = 120.0;
+  private static final int SPRITE_WIDTH = 24;
+  private static final int SPRITE_HEIGHT = 24;
   private static final int FRAME_COLS = 4;
-  private static final int IDLE_ROW = 0;
-  private static final int RUN_ROW = 4;
 
   private double x, y;
   private int currentTileX, currentTileY;
   private int targetTileX, targetTileY;
-  private Image frontSpriteSheet;
-  private Image rearSpriteSheet;
+  private Image spriteSheet;
   private int animationFrame;
   private double animationTime;
-  private boolean movingUp;
+  private int facingRow = 0; // 0: down, 1: up, 2: side
+  private boolean flipHorizontal = false;
   private boolean isMoving;
 
   public Player(int startTileX, int startTileY) {
@@ -27,26 +25,20 @@ public class Player {
     this.currentTileY = startTileY;
     this.targetTileX = startTileX;
     this.targetTileY = startTileY;
-    this.x = (startTileX - startTileY) * 20.0;
-    this.y = (startTileX + startTileY) * 10.0;
+    this.x = startTileX * 48.0;
+    this.y = startTileY * 48.0;
     this.animationFrame = 0;
     this.animationTime = 0;
-    this.movingUp = false;
     this.isMoving = false;
     loadSprites();
   }
 
   private void loadSprites() {
-    frontSpriteSheet =
+    spriteSheet =
         new Image(
             getClass()
                 .getResourceAsStream(
-                    "/assets/sprites/isometric_character_template_2023_06_16/template-spritesheet-front 2.png"));
-    rearSpriteSheet =
-        new Image(
-            getClass()
-                .getResourceAsStream(
-                    "/assets/sprites/isometric_character_template_2023_06_16/template-spritesheet-rear 2.png"));
+                    "/assets/sprites/characters/main character/walk and idle.png"));
   }
 
   public void tryMove(int dx, int dy, TileMap tileMap) {
@@ -57,18 +49,32 @@ public class Player {
     int newTileX = currentTileX + dx;
     int newTileY = currentTileY + dy;
 
+    // Update facing direction based on movement input
+    if (dy > 0) {
+      facingRow = 0;
+      flipHorizontal = false;
+    } else if (dy < 0) {
+      facingRow = 1;
+      flipHorizontal = false;
+    } else if (dx > 0) {
+      facingRow = 2;
+      flipHorizontal = false;
+    } else if (dx < 0) {
+      facingRow = 2;
+      flipHorizontal = true;
+    }
+
     if (tileMap.isWalkable(newTileX, newTileY)) {
       targetTileX = newTileX;
       targetTileY = newTileY;
       isMoving = true;
-      movingUp = (dy < 0);
     }
   }
 
   public void update(double deltaTime) {
     if (isMoving) {
-      double targetX = (targetTileX - targetTileY) * 20.0;
-      double targetY = (targetTileX + targetTileY) * 10.0;
+      double targetX = targetTileX * 48.0;
+      double targetY = targetTileY * 48.0;
 
       double dx = targetX - x;
       double dy = targetY - y;
@@ -100,24 +106,41 @@ public class Player {
   }
 
   public void render(GraphicsContext gc, double offsetX, double offsetY) {
-    Image currentSheet = movingUp ? rearSpriteSheet : frontSpriteSheet;
+    if (spriteSheet == null) {
+      return;
+    }
 
-    int frameX = animationFrame * SPRITE_WIDTH;
-    int frameY = (isMoving ? RUN_ROW : IDLE_ROW) * SPRITE_HEIGHT;
+    // Idle columns: 0..3, Walk columns: 4..7 (Note: Row 0 (down) has empty cols 4-7, so we reuse
+    // cols 0-3)
+    int frameCol = animationFrame;
+    if (isMoving && facingRow != 0) {
+      frameCol += 4;
+    }
+    int frameX = frameCol * SPRITE_WIDTH;
+    int frameY = facingRow * SPRITE_HEIGHT;
 
-    double renderWidth = SPRITE_WIDTH * 0.35;
-    double renderHeight = SPRITE_HEIGHT * 0.35;
+    double renderWidth = 48.0;
+    double renderHeight = 48.0;
+
+    gc.save();
+    if (flipHorizontal) {
+      gc.translate(x + offsetX + 24.0, 0);
+      gc.scale(-1, 1);
+      gc.translate(-(x + offsetX + 24.0), 0);
+    }
 
     gc.drawImage(
-        currentSheet,
+        spriteSheet,
         frameX,
         frameY,
         SPRITE_WIDTH,
         SPRITE_HEIGHT,
-        x + offsetX - renderWidth / 2.0,
-        y + offsetY - renderHeight + 10,
+        x + offsetX + 24.0 - renderWidth / 2.0,
+        y + offsetY + 48.0 - renderHeight,
         renderWidth,
         renderHeight);
+
+    gc.restore();
   }
 
   public int getCurrentTileX() {
@@ -126,6 +149,14 @@ public class Player {
 
   public int getCurrentTileY() {
     return currentTileY;
+  }
+
+  public double getX() {
+    return x;
+  }
+
+  public double getY() {
+    return y;
   }
 
   public boolean isMoving() {

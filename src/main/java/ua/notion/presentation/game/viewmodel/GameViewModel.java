@@ -19,7 +19,7 @@ public class GameViewModel {
     this.tileMap = new TileMap(mapWidth, mapHeight);
     this.player = new Player(10, 10);
     this.keyboardHandler = new KeyboardHandler();
-    this.plantManager = new PlantManager(tileMap.getIsoCoords());
+    this.plantManager = new PlantManager(tileMap.getOrthoCoords());
     this.seedInventory = new SeedInventoryViewModel();
   }
 

@@ -12,8 +12,6 @@ import lombok.NoArgsConstructor;
 public class Plant {
   private Integer id;
   private String name;
-  private String firstName;
-  private String lastName;
   private String species;
   private Integer growthDays;
   private String climateType;

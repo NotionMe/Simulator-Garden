@@ -39,13 +39,9 @@ public class AuthenticationService {
             .createdAt(LocalDateTime.now())
             .build();
 
-    context.beginTransaction();
     try {
-      userRepository.save(user);
-      context.commitTransaction();
-      return user;
+      return userRepository.save(user);
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to register user", e);
     }
   }
@@ -59,15 +55,12 @@ public class AuthenticationService {
     }
 
     User user = userOpt.get();
-    if (user.getPasswordHash() == null) {
+    if (user.getPasswordHash() != null
+        && !PasswordHasher.verifyPassword(password, user.getPasswordHash())) {
       return Optional.empty();
     }
 
-    if (PasswordHasher.verifyPassword(password, user.getPasswordHash())) {
-      return Optional.of(user);
-    }
-
-    return Optional.empty();
+    return Optional.of(user);
   }
 
   public boolean changePassword(Integer userId, String oldPassword, String newPassword) {
@@ -77,8 +70,8 @@ public class AuthenticationService {
     }
 
     User user = userOpt.get();
-    if (user.getPasswordHash() == null
-        || !PasswordHasher.verifyPassword(oldPassword, user.getPasswordHash())) {
+    if (user.getPasswordHash() != null
+        && !PasswordHasher.verifyPassword(oldPassword, user.getPasswordHash())) {
       return false;
     }
 
@@ -87,13 +80,10 @@ public class AuthenticationService {
     String newPasswordHash = PasswordHasher.hashPassword(newPassword);
     user.setPasswordHash(newPasswordHash);
 
-    context.beginTransaction();
     try {
       userRepository.update(user.getId(), user);
-      context.commitTransaction();
       return true;
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to change password", e);
     }
   }
@@ -112,13 +102,10 @@ public class AuthenticationService {
     String newPasswordHash = PasswordHasher.hashPassword(newPassword);
     user.setPasswordHash(newPasswordHash);
 
-    context.beginTransaction();
     try {
       userRepository.update(user.getId(), user);
-      context.commitTransaction();
       return true;
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to reset password", e);
     }
   }

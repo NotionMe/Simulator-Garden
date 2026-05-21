@@ -42,13 +42,9 @@ public class PlantInstanceService {
             .isFertilized(false)
             .build();
 
-    context.beginTransaction();
     try {
-      plantInstanceRepository.save(instance);
-      context.commitTransaction();
-      return instance;
+      return plantInstanceRepository.save(instance);
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to plant seed", e);
     }
   }
@@ -87,12 +83,9 @@ public class PlantInstanceService {
     PlantInstance instance = instanceOpt.get();
     instance.setIsWatered(true);
 
-    context.beginTransaction();
     try {
       plantInstanceRepository.update(instance.getId(), instance);
-      context.commitTransaction();
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to water plant", e);
     }
   }
@@ -106,12 +99,9 @@ public class PlantInstanceService {
     PlantInstance instance = instanceOpt.get();
     instance.setIsFertilized(true);
 
-    context.beginTransaction();
     try {
       plantInstanceRepository.update(instance.getId(), instance);
-      context.commitTransaction();
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to fertilize plant", e);
     }
   }
@@ -136,12 +126,9 @@ public class PlantInstanceService {
     if (newStage != instance.getGrowthStage()) {
       instance.setGrowthStage(newStage);
 
-      context.beginTransaction();
       try {
         plantInstanceRepository.update(instance.getId(), instance);
-        context.commitTransaction();
       } catch (Exception e) {
-        context.rollbackTransaction();
         throw new RuntimeException("Failed to update growth stage", e);
       }
     }
@@ -162,23 +149,17 @@ public class PlantInstanceService {
       throw new IllegalStateException("Plant is not ready to harvest");
     }
 
-    context.beginTransaction();
     try {
       plantInstanceRepository.delete(plantInstanceId);
-      context.commitTransaction();
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to harvest plant", e);
     }
   }
 
   public void removePlant(Integer plantInstanceId) {
-    context.beginTransaction();
     try {
       plantInstanceRepository.delete(plantInstanceId);
-      context.commitTransaction();
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to remove plant", e);
     }
   }

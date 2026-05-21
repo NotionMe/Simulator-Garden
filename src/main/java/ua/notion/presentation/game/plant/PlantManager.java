@@ -3,16 +3,17 @@ package ua.notion.presentation.game.plant;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.scene.canvas.GraphicsContext;
+import ua.notion.presentation.game.assets.PlantBasesAtlas;
 import ua.notion.presentation.game.assets.PlantBasesAtlas.PlantType;
-import ua.notion.presentation.game.map.IsometricCoordinates;
+import ua.notion.presentation.game.map.OrthogonalCoordinates;
 
 public class PlantManager {
   private final List<PlantSprite> plants;
-  private final IsometricCoordinates isoCoords;
+  private final OrthogonalCoordinates orthoCoords;
 
-  public PlantManager(IsometricCoordinates isoCoords) {
+  public PlantManager(OrthogonalCoordinates orthoCoords) {
     this.plants = new ArrayList<>();
-    this.isoCoords = isoCoords;
+    this.orthoCoords = orthoCoords;
   }
 
   public void plantSeed(PlantType plantType, int tileX, int tileY) {
@@ -37,11 +38,13 @@ public class PlantManager {
 
   public void render(GraphicsContext gc, double offsetX, double offsetY, double scale) {
     for (PlantSprite plant : plants) {
-      double screenX = isoCoords.toScreenX(plant.getTileX(), plant.getTileY()) + offsetX;
-      double screenY = isoCoords.toScreenY(plant.getTileX(), plant.getTileY()) + offsetY;
+      double screenX = orthoCoords.toScreenX(plant.getTileX(), plant.getTileY()) + offsetX;
+      double screenY = orthoCoords.toScreenY(plant.getTileX(), plant.getTileY()) + offsetY;
 
-      // Рослини малюються вище тайлів (offset -30 замість -10)
-      plant.render(gc, screenX, screenY - 30, scale);
+      double destWidth = PlantBasesAtlas.TILE_WIDTH * scale;
+      double destHeight = PlantBasesAtlas.TILE_HEIGHT * scale;
+
+      plant.render(gc, screenX + 24.0 - destWidth / 2.0, screenY + 48.0 - destHeight, scale);
     }
   }
 

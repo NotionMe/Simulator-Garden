@@ -1,15 +1,16 @@
 package ua.notion.infrastructure.persistence.impl;
 
+import java.util.Comparator;
 import java.util.List;
 import ua.notion.domain.entity.Task;
 import ua.notion.infrastructure.persistence.GenericRepository;
 import ua.notion.infrastructure.persistence.contract.TaskRepository;
-import ua.notion.infrastructure.persistence.util.ConnectionPool;
+import ua.notion.infrastructure.websocket.WebSocketApiClient;
 
 public class TaskRepositoryImpl extends GenericRepository<Task, Integer> implements TaskRepository {
 
-  public TaskRepositoryImpl(ConnectionPool connectionPool) {
-    super(connectionPool, Task.class, "tasks");
+  public TaskRepositoryImpl(WebSocketApiClient apiClient) {
+    super(apiClient, Task.class, "task");
   }
 
   @Override
@@ -24,21 +25,15 @@ public class TaskRepositoryImpl extends GenericRepository<Task, Integer> impleme
 
   @Override
   public List<Task> findPendingTasks() {
-    Filter filter =
-        (whereClause, params) -> {
-          whereClause.add("is_done = ?");
-          params.add(false);
-        };
-    return findAll(filter, "due_at", true, 0, Integer.MAX_VALUE);
+    return findAll().stream()
+        .filter(t -> !Boolean.TRUE.equals(t.getIsDone()))
+        .sorted(
+            Comparator.comparing(Task::getDueAt, Comparator.nullsLast(Comparator.naturalOrder())))
+        .toList();
   }
 
   @Override
   public long countByPlantInstanceId(Integer plantInstanceId) {
-    Filter filter =
-        (whereClause, params) -> {
-          whereClause.add("plant_instance_id = ?");
-          params.add(plantInstanceId);
-        };
-    return count(filter);
+    return findByPlantInstanceId(plantInstanceId).size();
   }
 }

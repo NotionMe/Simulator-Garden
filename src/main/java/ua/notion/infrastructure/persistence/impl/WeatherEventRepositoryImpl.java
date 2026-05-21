@@ -4,13 +4,13 @@ import java.util.List;
 import ua.notion.domain.entity.WeatherEvent;
 import ua.notion.infrastructure.persistence.GenericRepository;
 import ua.notion.infrastructure.persistence.contract.WeatherEventRepository;
-import ua.notion.infrastructure.persistence.util.ConnectionPool;
+import ua.notion.infrastructure.websocket.WebSocketApiClient;
 
 public class WeatherEventRepositoryImpl extends GenericRepository<WeatherEvent, Integer>
     implements WeatherEventRepository {
 
-  public WeatherEventRepositoryImpl(ConnectionPool connectionPool) {
-    super(connectionPool, WeatherEvent.class, "weather_events");
+  public WeatherEventRepositoryImpl(WebSocketApiClient apiClient) {
+    super(apiClient, WeatherEvent.class, "weatherevent");
   }
 
   @Override
@@ -25,11 +25,6 @@ public class WeatherEventRepositoryImpl extends GenericRepository<WeatherEvent, 
 
   @Override
   public long countByGardenId(Integer gardenId) {
-    Filter filter =
-        (whereClause, params) -> {
-          whereClause.add("garden_id = ?");
-          params.add(gardenId);
-        };
-    return count(filter);
+    return findByGardenId(gardenId).size();
   }
 }

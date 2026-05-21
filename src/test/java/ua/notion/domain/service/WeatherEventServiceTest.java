@@ -130,9 +130,7 @@ class WeatherEventServiceTest {
             .occurredAt(LocalDateTime.now().minusDays(10))
             .build();
 
-    context.beginTransaction();
     context.getWeatherEventRepository().save(old);
-    context.commitTransaction();
 
     List<WeatherEvent> recent = weatherEventService.findRecentWeatherEvents(testGarden.getId(), 7);
 
@@ -191,10 +189,8 @@ class WeatherEventServiceTest {
             .occurredAt(LocalDateTime.now().minusDays(15))
             .build();
 
-    context.beginTransaction();
     context.getWeatherEventRepository().save(old1);
     context.getWeatherEventRepository().save(old2);
-    context.commitTransaction();
 
     weatherEventService.deleteOldWeatherEvents(testGarden.getId(), 7);
 

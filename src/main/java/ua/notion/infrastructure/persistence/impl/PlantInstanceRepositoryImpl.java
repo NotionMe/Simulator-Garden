@@ -4,13 +4,13 @@ import java.util.List;
 import ua.notion.domain.entity.PlantInstance;
 import ua.notion.infrastructure.persistence.GenericRepository;
 import ua.notion.infrastructure.persistence.contract.PlantInstanceRepository;
-import ua.notion.infrastructure.persistence.util.ConnectionPool;
+import ua.notion.infrastructure.websocket.WebSocketApiClient;
 
 public class PlantInstanceRepositoryImpl extends GenericRepository<PlantInstance, Integer>
     implements PlantInstanceRepository {
 
-  public PlantInstanceRepositoryImpl(ConnectionPool connectionPool) {
-    super(connectionPool, PlantInstance.class, "plant_instances");
+  public PlantInstanceRepositoryImpl(WebSocketApiClient apiClient) {
+    super(apiClient, PlantInstance.class, "plantinstance");
   }
 
   @Override
@@ -26,25 +26,13 @@ public class PlantInstanceRepositoryImpl extends GenericRepository<PlantInstance
   @Override
   public List<PlantInstance> findByGardenIdAndCellPosition(
       Integer gardenId, Integer cellX, Integer cellY) {
-    Filter filter =
-        (whereClause, params) -> {
-          whereClause.add("garden_id = ?");
-          whereClause.add("cell_x = ?");
-          whereClause.add("cell_y = ?");
-          params.add(gardenId);
-          params.add(cellX);
-          params.add(cellY);
-        };
-    return findAll(filter, null, true, 0, Integer.MAX_VALUE);
+    return findByGardenId(gardenId).stream()
+        .filter(pi -> pi.getCellX().equals(cellX) && pi.getCellY().equals(cellY))
+        .toList();
   }
 
   @Override
   public long countByGardenId(Integer gardenId) {
-    Filter filter =
-        (whereClause, params) -> {
-          whereClause.add("garden_id = ?");
-          params.add(gardenId);
-        };
-    return count(filter);
+    return findByGardenId(gardenId).size();
   }
 }

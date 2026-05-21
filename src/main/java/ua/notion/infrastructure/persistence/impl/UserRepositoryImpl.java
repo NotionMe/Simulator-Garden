@@ -4,12 +4,12 @@ import java.util.List;
 import ua.notion.domain.entity.User;
 import ua.notion.infrastructure.persistence.GenericRepository;
 import ua.notion.infrastructure.persistence.contract.UserRepository;
-import ua.notion.infrastructure.persistence.util.ConnectionPool;
+import ua.notion.infrastructure.websocket.WebSocketApiClient;
 
 public class UserRepositoryImpl extends GenericRepository<User, Integer> implements UserRepository {
 
-  public UserRepositoryImpl(ConnectionPool connectionPool) {
-    super(connectionPool, User.class, "users");
+  public UserRepositoryImpl(WebSocketApiClient apiClient) {
+    super(apiClient, User.class, "user");
   }
 
   @Override
@@ -24,21 +24,12 @@ public class UserRepositoryImpl extends GenericRepository<User, Integer> impleme
 
   @Override
   public boolean existsByUsername(String username) {
-    Filter filter =
-        (whereClause, params) -> {
-          whereClause.add("username = ?");
-          params.add(username);
-        };
-    return count(filter) > 0;
+    return findByUsername(username).stream()
+        .anyMatch(u -> u.getUsername().equalsIgnoreCase(username));
   }
 
   @Override
   public boolean existsByEmail(String email) {
-    Filter filter =
-        (whereClause, params) -> {
-          whereClause.add("email = ?");
-          params.add(email);
-        };
-    return count(filter) > 0;
+    return findByEmail(email).stream().anyMatch(u -> u.getEmail().equalsIgnoreCase(email));
   }
 }

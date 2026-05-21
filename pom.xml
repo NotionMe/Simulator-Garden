@@ -67,6 +67,13 @@
             <version>7.0.0</version>
         </dependency>
 
+        <!-- Gson for WebSocket JSON payloads -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+
         <!-- JavaFX -->
         <dependency>
             <groupId>org.openjfx</groupId>

@@ -30,13 +30,9 @@ public class GardenService {
             .createdAt(LocalDateTime.now())
             .build();
 
-    context.beginTransaction();
     try {
-      gardenRepository.save(garden);
-      context.commitTransaction();
-      return garden;
+      return gardenRepository.save(garden);
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to create garden", e);
     }
   }
@@ -61,23 +57,17 @@ public class GardenService {
       throw new IllegalArgumentException("Garden dimensions must be positive");
     }
 
-    context.beginTransaction();
     try {
       gardenRepository.update(garden.getId(), garden);
-      context.commitTransaction();
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to update garden", e);
     }
   }
 
   public void deleteGarden(Integer id) {
-    context.beginTransaction();
     try {
       gardenRepository.delete(id);
-      context.commitTransaction();
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to delete garden", e);
     }
   }

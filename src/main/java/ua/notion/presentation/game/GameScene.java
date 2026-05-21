@@ -1,5 +1,7 @@
 package ua.notion.presentation.game;
 
+import java.util.ArrayList;
+import java.util.List;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
@@ -64,15 +66,21 @@ public class GameScene {
     }
   }
 
-  private int[] screenToTile(double screenX, double screenY) {
-    // Adjust for map offset
-    double adjustedX = screenX - GameConstants.MAP_OFFSET_X;
-    double adjustedY = screenY - GameConstants.MAP_OFFSET_Y;
+  private double getCameraOffsetX() {
+    return canvas.getWidth() / 2.0 - (viewModel.getPlayer().getX() + 24.0);
+  }
 
-    // Use the existing IsometricCoordinates conversion methods
-    var isoCoords = viewModel.getTileMap().getIsoCoords();
-    int col = isoCoords.toGridCol(adjustedX, adjustedY);
-    int row = isoCoords.toGridRow(adjustedX, adjustedY);
+  private double getCameraOffsetY() {
+    return canvas.getHeight() / 2.0 - (viewModel.getPlayer().getY() + 24.0);
+  }
+
+  private int[] screenToTile(double screenX, double screenY) {
+    double adjustedX = screenX - getCameraOffsetX();
+    double adjustedY = screenY - getCameraOffsetY();
+
+    var orthoCoords = viewModel.getTileMap().getOrthoCoords();
+    int col = orthoCoords.toGridCol(adjustedX, adjustedY);
+    int row = orthoCoords.toGridRow(adjustedX, adjustedY);
 
     return new int[] {col, row};
   }
@@ -202,11 +210,68 @@ public class GameScene {
   }
 
   private void renderGame() {
-    viewModel.getTileMap().render(gc);
-    viewModel
-        .getPlantManager()
-        .render(gc, GameConstants.MAP_OFFSET_X, GameConstants.MAP_OFFSET_Y, 4.0);
-    viewModel.getPlayer().render(gc, GameConstants.MAP_OFFSET_X, GameConstants.MAP_OFFSET_Y);
+    double offsetX = getCameraOffsetX();
+    double offsetY = getCameraOffsetY();
+
+    viewModel.getTileMap().render(gc, offsetX, offsetY);
+
+    class DepthRenderable {
+      final double y;
+      final Runnable renderAction;
+
+      DepthRenderable(double y, Runnable renderAction) {
+        this.y = y;
+        this.renderAction = renderAction;
+      }
+    }
+
+    List<DepthRenderable> renderQueue = new ArrayList<>();
+
+    // Add plants to the queue
+    for (var plant : viewModel.getPlantManager().getAllPlants()) {
+      double plantY = plant.getTileY() * 48.0 + 48.0;
+      renderQueue.add(
+          new DepthRenderable(
+              plantY,
+              () -> {
+                double screenX =
+                    viewModel
+                            .getTileMap()
+                            .getOrthoCoords()
+                            .toScreenX(plant.getTileX(), plant.getTileY())
+                        + offsetX;
+                double screenY =
+                    viewModel
+                            .getTileMap()
+                            .getOrthoCoords()
+                            .toScreenY(plant.getTileX(), plant.getTileY())
+                        + offsetY;
+                double scale = 4.0;
+                double destWidth =
+                    ua.notion.presentation.game.assets.PlantBasesAtlas.TILE_WIDTH * scale;
+                double destHeight =
+                    ua.notion.presentation.game.assets.PlantBasesAtlas.TILE_HEIGHT * scale;
+                plant.render(
+                    gc, screenX + 24.0 - destWidth / 2.0, screenY + 48.0 - destHeight, scale);
+              }));
+    }
+
+    // Add player to the queue
+    double playerBaseY = viewModel.getPlayer().getY() + 48.0;
+    renderQueue.add(
+        new DepthRenderable(
+            playerBaseY,
+            () -> {
+              viewModel.getPlayer().render(gc, offsetX, offsetY);
+            }));
+
+    // Sort queue by vertical Y coordinate
+    renderQueue.sort((r1, r2) -> Double.compare(r1.y, r2.y));
+
+    // Render in sorted order
+    for (DepthRenderable renderable : renderQueue) {
+      renderable.renderAction.run();
+    }
   }
 
   private void renderUI() {

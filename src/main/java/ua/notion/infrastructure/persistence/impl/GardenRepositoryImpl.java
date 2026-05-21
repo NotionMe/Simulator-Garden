@@ -4,13 +4,13 @@ import java.util.List;
 import ua.notion.domain.entity.Garden;
 import ua.notion.infrastructure.persistence.GenericRepository;
 import ua.notion.infrastructure.persistence.contract.GardenRepository;
-import ua.notion.infrastructure.persistence.util.ConnectionPool;
+import ua.notion.infrastructure.websocket.WebSocketApiClient;
 
 public class GardenRepositoryImpl extends GenericRepository<Garden, Integer>
     implements GardenRepository {
 
-  public GardenRepositoryImpl(ConnectionPool connectionPool) {
-    super(connectionPool, Garden.class, "gardens");
+  public GardenRepositoryImpl(WebSocketApiClient apiClient) {
+    super(apiClient, Garden.class, "garden");
   }
 
   @Override
@@ -20,11 +20,6 @@ public class GardenRepositoryImpl extends GenericRepository<Garden, Integer>
 
   @Override
   public long countByUserId(Integer userId) {
-    Filter filter =
-        (whereClause, params) -> {
-          whereClause.add("user_id = ?");
-          params.add(userId);
-        };
-    return count(filter);
+    return findByUserId(userId).size();
   }
 }

@@ -4,13 +4,13 @@ import java.util.List;
 import ua.notion.domain.entity.Achievement;
 import ua.notion.infrastructure.persistence.GenericRepository;
 import ua.notion.infrastructure.persistence.contract.AchievementRepository;
-import ua.notion.infrastructure.persistence.util.ConnectionPool;
+import ua.notion.infrastructure.websocket.WebSocketApiClient;
 
 public class AchievementRepositoryImpl extends GenericRepository<Achievement, Integer>
     implements AchievementRepository {
 
-  public AchievementRepositoryImpl(ConnectionPool connectionPool) {
-    super(connectionPool, Achievement.class, "achievements");
+  public AchievementRepositoryImpl(WebSocketApiClient apiClient) {
+    super(apiClient, Achievement.class, "achievement");
   }
 
   @Override
@@ -25,11 +25,6 @@ public class AchievementRepositoryImpl extends GenericRepository<Achievement, In
 
   @Override
   public long countByUserId(Integer userId) {
-    Filter filter =
-        (whereClause, params) -> {
-          whereClause.add("user_id = ?");
-          params.add(userId);
-        };
-    return count(filter);
+    return findByUserId(userId).size();
   }
 }

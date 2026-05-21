@@ -25,13 +25,9 @@ public class TaskService {
             .isDone(false)
             .build();
 
-    context.beginTransaction();
     try {
-      taskRepository.save(task);
-      context.commitTransaction();
-      return task;
+      return taskRepository.save(task);
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to create task", e);
     }
   }
@@ -75,12 +71,9 @@ public class TaskService {
     Task task = taskOpt.get();
     task.setIsDone(true);
 
-    context.beginTransaction();
     try {
       taskRepository.update(task.getId(), task);
-      context.commitTransaction();
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to complete task", e);
     }
   }
@@ -90,23 +83,17 @@ public class TaskService {
       throw new IllegalArgumentException("Task ID cannot be null");
     }
 
-    context.beginTransaction();
     try {
       taskRepository.update(task.getId(), task);
-      context.commitTransaction();
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to update task", e);
     }
   }
 
   public void deleteTask(Integer id) {
-    context.beginTransaction();
     try {
       taskRepository.delete(id);
-      context.commitTransaction();
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to delete task", e);
     }
   }

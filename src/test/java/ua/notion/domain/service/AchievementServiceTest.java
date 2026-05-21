@@ -128,9 +128,7 @@ class AchievementServiceTest {
             .earnedAt(LocalDateTime.now().minusDays(10))
             .build();
 
-    context.beginTransaction();
     context.getAchievementRepository().save(old);
-    context.commitTransaction();
 
     List<Achievement> recent = achievementService.findRecentAchievements(testUser.getId(), 7);
 

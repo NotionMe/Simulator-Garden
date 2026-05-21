@@ -14,11 +14,10 @@ import ua.notion.infrastructure.persistence.impl.PlantRepositoryImpl;
 import ua.notion.infrastructure.persistence.impl.TaskRepositoryImpl;
 import ua.notion.infrastructure.persistence.impl.UserRepositoryImpl;
 import ua.notion.infrastructure.persistence.impl.WeatherEventRepositoryImpl;
-import ua.notion.infrastructure.persistence.util.ConnectionPool;
+import ua.notion.infrastructure.websocket.WebSocketApiClient;
 
 public class PersistenceContext {
-  private final ConnectionPool connectionPool;
-  private UnitOfWork unitOfWork;
+  private final WebSocketApiClient apiClient;
 
   private final UserRepository userRepository;
   private final GardenRepository gardenRepository;
@@ -28,63 +27,15 @@ public class PersistenceContext {
   private final WeatherEventRepository weatherEventRepository;
   private final AchievementRepository achievementRepository;
 
-  public PersistenceContext(ConnectionPool connectionPool) {
-    this.connectionPool = connectionPool;
-    this.userRepository = new UserRepositoryImpl(connectionPool);
-    this.gardenRepository = new GardenRepositoryImpl(connectionPool);
-    this.plantRepository = new PlantRepositoryImpl(connectionPool);
-    this.plantInstanceRepository = new PlantInstanceRepositoryImpl(connectionPool);
-    this.taskRepository = new TaskRepositoryImpl(connectionPool);
-    this.weatherEventRepository = new WeatherEventRepositoryImpl(connectionPool);
-    this.achievementRepository = new AchievementRepositoryImpl(connectionPool);
-  }
-
-  public UnitOfWork beginTransaction() {
-    if (unitOfWork != null && unitOfWork.isActive()) {
-      throw new IllegalStateException("Transaction already active");
-    }
-    unitOfWork = new UnitOfWork(connectionPool);
-    unitOfWork.begin();
-
-    // Set UnitOfWork for all repositories
-    ((GenericRepository<?, ?>) userRepository).setUnitOfWork(unitOfWork);
-    ((GenericRepository<?, ?>) gardenRepository).setUnitOfWork(unitOfWork);
-    ((GenericRepository<?, ?>) plantRepository).setUnitOfWork(unitOfWork);
-    ((GenericRepository<?, ?>) plantInstanceRepository).setUnitOfWork(unitOfWork);
-    ((GenericRepository<?, ?>) taskRepository).setUnitOfWork(unitOfWork);
-    ((GenericRepository<?, ?>) weatherEventRepository).setUnitOfWork(unitOfWork);
-    ((GenericRepository<?, ?>) achievementRepository).setUnitOfWork(unitOfWork);
-
-    return unitOfWork;
-  }
-
-  public void commitTransaction() {
-    if (unitOfWork == null || !unitOfWork.isActive()) {
-      throw new IllegalStateException("No active transaction");
-    }
-    unitOfWork.commit();
-    clearUnitOfWorkFromRepositories();
-  }
-
-  public void rollbackTransaction() {
-    if (unitOfWork != null && unitOfWork.isActive()) {
-      unitOfWork.rollback();
-    }
-    clearUnitOfWorkFromRepositories();
-  }
-
-  private void clearUnitOfWorkFromRepositories() {
-    ((GenericRepository<?, ?>) userRepository).setUnitOfWork(null);
-    ((GenericRepository<?, ?>) gardenRepository).setUnitOfWork(null);
-    ((GenericRepository<?, ?>) plantRepository).setUnitOfWork(null);
-    ((GenericRepository<?, ?>) plantInstanceRepository).setUnitOfWork(null);
-    ((GenericRepository<?, ?>) taskRepository).setUnitOfWork(null);
-    ((GenericRepository<?, ?>) weatherEventRepository).setUnitOfWork(null);
-    ((GenericRepository<?, ?>) achievementRepository).setUnitOfWork(null);
-  }
-
-  public UnitOfWork getUnitOfWork() {
-    return unitOfWork;
+  public PersistenceContext(WebSocketApiClient apiClient) {
+    this.apiClient = apiClient;
+    this.userRepository = new UserRepositoryImpl(apiClient);
+    this.gardenRepository = new GardenRepositoryImpl(apiClient);
+    this.plantRepository = new PlantRepositoryImpl(apiClient);
+    this.plantInstanceRepository = new PlantInstanceRepositoryImpl(apiClient);
+    this.taskRepository = new TaskRepositoryImpl(apiClient);
+    this.weatherEventRepository = new WeatherEventRepositoryImpl(apiClient);
+    this.achievementRepository = new AchievementRepositoryImpl(apiClient);
   }
 
   public UserRepository getUserRepository() {
@@ -115,14 +66,11 @@ public class PersistenceContext {
     return achievementRepository;
   }
 
-  public ConnectionPool getConnectionPool() {
-    return connectionPool;
-  }
-
   public void close() {
-    if (unitOfWork != null && unitOfWork.isActive()) {
-      unitOfWork.rollback();
+    try {
+      apiClient.close();
+    } catch (Exception e) {
+      // Ignore
     }
-    connectionPool.shutdown();
   }
 }

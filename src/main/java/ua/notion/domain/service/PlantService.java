@@ -24,21 +24,15 @@ public class PlantService {
     Plant plant =
         Plant.builder()
             .name(name)
-            .firstName(null)
-            .lastName(null)
             .species(species)
             .growthDays(growthDays)
             .climateType(climateType)
             .iconKey(iconKey)
             .build();
 
-    context.beginTransaction();
     try {
-      plantRepository.save(plant);
-      context.commitTransaction();
-      return plant;
+      return plantRepository.save(plant);
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to create plant", e);
     }
   }
@@ -71,23 +65,17 @@ public class PlantService {
       throw new IllegalArgumentException("Growth days must be positive");
     }
 
-    context.beginTransaction();
     try {
       plantRepository.update(plant.getId(), plant);
-      context.commitTransaction();
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to update plant", e);
     }
   }
 
   public void deletePlant(Integer id) {
-    context.beginTransaction();
     try {
       plantRepository.delete(id);
-      context.commitTransaction();
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to delete plant", e);
     }
   }

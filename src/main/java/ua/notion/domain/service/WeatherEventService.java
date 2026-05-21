@@ -29,13 +29,9 @@ public class WeatherEventService {
             .occurredAt(LocalDateTime.now())
             .build();
 
-    context.beginTransaction();
     try {
-      weatherEventRepository.save(event);
-      context.commitTransaction();
-      return event;
+      return weatherEventRepository.save(event);
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to create weather event", e);
     }
   }
@@ -70,12 +66,9 @@ public class WeatherEventService {
   }
 
   public void deleteWeatherEvent(Integer id) {
-    context.beginTransaction();
     try {
       weatherEventRepository.delete(id);
-      context.commitTransaction();
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to delete weather event", e);
     }
   }
@@ -87,14 +80,11 @@ public class WeatherEventService {
             .filter(we -> we.getGardenId().equals(gardenId) && we.getOccurredAt().isBefore(cutoff))
             .toList();
 
-    context.beginTransaction();
     try {
       for (WeatherEvent event : oldEvents) {
         weatherEventRepository.delete(event.getId());
       }
-      context.commitTransaction();
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to delete old weather events", e);
     }
   }

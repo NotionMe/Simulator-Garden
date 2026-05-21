@@ -20,13 +20,9 @@ public class UserService {
     User user =
         User.builder().username(username).email(email).createdAt(LocalDateTime.now()).build();
 
-    context.beginTransaction();
     try {
-      userRepository.save(user);
-      context.commitTransaction();
-      return user;
+      return userRepository.save(user);
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to create user", e);
     }
   }
@@ -54,23 +50,17 @@ public class UserService {
       throw new IllegalArgumentException("User ID cannot be null");
     }
 
-    context.beginTransaction();
     try {
       userRepository.update(user.getId(), user);
-      context.commitTransaction();
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to update user", e);
     }
   }
 
   public void deleteUser(Integer id) {
-    context.beginTransaction();
     try {
       userRepository.delete(id);
-      context.commitTransaction();
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to delete user", e);
     }
   }

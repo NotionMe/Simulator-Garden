@@ -29,13 +29,8 @@ public class AssetLoader {
   private void preloadImages() {
     loadImage(
         "background", "/assets/background/1024x512/Cloudy Sky/Cloudy_Sky-Blue_01-1024x512.png");
-    loadImage(
-        "player_front",
-        "/assets/sprites/isometric_character_template_2023_06_16/template-spritesheet-front 2.png");
-    loadImage(
-        "player_rear",
-        "/assets/sprites/isometric_character_template_2023_06_16/template-spritesheet-rear 2.png");
-    loadImage("blocks", GardenTileAtlas.BLOCKS_SPRITE_PATH);
+    loadImage("tilemap", "/assets/tilemaps/spring tilemap.png");
+    loadImage("player", "/assets/sprites/characters/main character/walk and idle.png");
   }
 
   private void loadImage(String key, String path) {

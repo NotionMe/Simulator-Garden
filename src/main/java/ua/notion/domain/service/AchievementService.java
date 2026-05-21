@@ -29,13 +29,9 @@ public class AchievementService {
             .earnedAt(LocalDateTime.now())
             .build();
 
-    context.beginTransaction();
     try {
-      achievementRepository.save(achievement);
-      context.commitTransaction();
-      return achievement;
+      return achievementRepository.save(achievement);
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to unlock achievement", e);
     }
   }
@@ -69,12 +65,9 @@ public class AchievementService {
   }
 
   public void deleteAchievement(Integer id) {
-    context.beginTransaction();
     try {
       achievementRepository.delete(id);
-      context.commitTransaction();
     } catch (Exception e) {
-      context.rollbackTransaction();
       throw new RuntimeException("Failed to delete achievement", e);
     }
   }
