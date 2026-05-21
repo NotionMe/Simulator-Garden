@@ -25,7 +25,8 @@ import java.util.concurrent.TimeoutException;
 
 /** Client for the Rust server WebSocket CRUD API. */
 public class WebSocketApiClient implements AutoCloseable {
-  public static final String DEFAULT_URL = "ws://127.0.0.1:3000/server/ws";
+
+  public static final String DEFAULT_URL = "wss://rustserver-stan.azurewebsites.net/server/ws";
   private static final long DEFAULT_TIMEOUT_SECONDS = 10;
 
   private final URI serverUri;
@@ -156,6 +157,7 @@ public class WebSocketApiClient implements AutoCloseable {
   }
 
   private final class Listener implements WebSocket.Listener {
+
     private final StringBuilder partialMessage = new StringBuilder();
 
     @Override
@@ -202,6 +204,7 @@ public class WebSocketApiClient implements AutoCloseable {
   private static final class LocalDateTimeAdapter
       implements com.google.gson.JsonSerializer<LocalDateTime>,
           com.google.gson.JsonDeserializer<LocalDateTime> {
+
     @Override
     public JsonElement serialize(
         LocalDateTime src, Type typeOfSrc, com.google.gson.JsonSerializationContext context) {
@@ -246,6 +249,7 @@ public class WebSocketApiClient implements AutoCloseable {
   private static final class LocalDateAdapter
       implements com.google.gson.JsonSerializer<LocalDate>,
           com.google.gson.JsonDeserializer<LocalDate> {
+
     @Override
     public JsonElement serialize(
         LocalDate src, Type typeOfSrc, com.google.gson.JsonSerializationContext context) {
