@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import ua.notion.domain.entity.User;
 
 public class MockWebSocketApiClient extends WebSocketApiClient {
 
@@ -92,7 +93,18 @@ public class MockWebSocketApiClient extends WebSocketApiClient {
     switch (command) {
       case "create":
         {
+          // If a Map is passed for "user", convert to User (mock stores password internally).
           Object entity = payload;
+          if ("user".equals(reason) && payload instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> map = (Map<String, Object>) payload;
+            User u = new User();
+            u.setUsername((String) map.get("username"));
+            u.setEmail((String) map.get("email"));
+            u.setPasswordHash((String) map.get("password"));
+            u.setCreatedAt(LocalDateTime.now());
+            entity = u;
+          }
 
           // Validate constraints
           validateEntityConstraints(reason, entity, list);
@@ -111,7 +123,50 @@ public class MockWebSocketApiClient extends WebSocketApiClient {
           }
 
           list.add(entity);
-          return entity;
+          return stripUserSecrets(entity);
+        }
+
+      case "login":
+        {
+          if (!"user".equals(reason)) {
+            throw new UnsupportedOperationException(
+                "login command is only supported for user resource");
+          }
+
+          @SuppressWarnings("unchecked")
+          Map<String, Object> loginPayload = (Map<String, Object>) payload;
+          String password = (String) loginPayload.get("password");
+          String loginUsername = (String) loginPayload.get("username");
+          String loginEmail = (String) loginPayload.get("email");
+
+          // Find user by username or email
+          Object found = null;
+          for (Object item : list) {
+            if (loginUsername != null) {
+              Object storedUsername = getFieldValue(item, "username");
+              if (loginUsername.equals(storedUsername)) {
+                found = item;
+                break;
+              }
+            } else if (loginEmail != null) {
+              Object storedEmail = getFieldValue(item, "email");
+              if (loginEmail.equals(storedEmail)) {
+                found = item;
+                break;
+              }
+            }
+          }
+
+          if (found == null) {
+            throw new WebSocketApiException("Record not found");
+          }
+
+          String storedPassword = (String) getFieldValue(found, "passwordHash");
+          if (storedPassword == null || !storedPassword.equals(password)) {
+            throw new WebSocketApiException("Invalid credentials");
+          }
+
+          return stripUserSecrets(found);
         }
 
       case "read":
@@ -383,6 +438,19 @@ public class MockWebSocketApiClient extends WebSocketApiClient {
       // Ignore
     }
     return null;
+  }
+
+  /** API responses never include password fields. */
+  private Object stripUserSecrets(Object entity) {
+    if (!(entity instanceof User user)) {
+      return entity;
+    }
+    User response = new User();
+    response.setId(user.getId());
+    response.setUsername(user.getUsername());
+    response.setEmail(user.getEmail());
+    response.setCreatedAt(user.getCreatedAt());
+    return response;
   }
 
   private Field findField(Class<?> clazz, String fieldName) {

@@ -1,15 +1,12 @@
 use crate::{
-    dto::{CreateUserDto, IdDto, UpdateUserDto, UserIdDto},
+    dto::{CreateUserDto, IdDto, LoginUserDto, UpdateUserDto},
     handlers::messages::{CommandType, RequestMessage, ResponseMessage, ResponseStatus},
     repositories::user_repository::PgUserRepository,
     services::user_service::UserService,
     state::app_state::AppState,
 };
 
-pub async fn dispatch_user_command(
-    request: RequestMessage,
-    state: AppState,
-) -> ResponseMessage {
+pub async fn dispatch_user_command(request: RequestMessage, state: AppState) -> ResponseMessage {
     let repo = PgUserRepository::new(state.db_pool.clone());
     let service = UserService::new(repo);
 
@@ -29,6 +26,38 @@ pub async fn dispatch_user_command(
             };
 
             match service.create_user(dto).await {
+                Ok(user) => ResponseMessage {
+                    request_id: request.request_id,
+                    status: ResponseStatus::Success,
+                    command: request.command,
+                    data: serde_json::to_value(user).ok(),
+                    error: None,
+                },
+                Err(err) => ResponseMessage {
+                    request_id: request.request_id,
+                    status: ResponseStatus::Error,
+                    command: request.command,
+                    data: None,
+                    error: Some(err.to_string()),
+                },
+            }
+        }
+
+        CommandType::Login => {
+            let dto = match serde_json::from_value::<LoginUserDto>(request.payload.clone()) {
+                Ok(dto) => dto,
+                Err(err) => {
+                    return ResponseMessage {
+                        request_id: request.request_id,
+                        status: ResponseStatus::Error,
+                        command: request.command,
+                        data: None,
+                        error: Some(format!("Invalid payload: {}", err)),
+                    };
+                }
+            };
+
+            match service.login_user(dto).await {
                 Ok(user) => ResponseMessage {
                     request_id: request.request_id,
                     status: ResponseStatus::Success,

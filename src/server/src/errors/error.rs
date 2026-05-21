@@ -1,9 +1,12 @@
 use thiserror::Error;
 
-use crate::errors::error;
-
 #[derive(Error, Debug)]
-pub enum AppError {}
+pub enum AppError {
+    #[error("Failed authorization")]
+    AuthError,
+    #[error("Password empty")]
+    PasswordEmpty,
+}
 
 pub type AppResult<T> = std::result::Result<T, AppError>;
 
@@ -14,6 +17,12 @@ pub enum DatabaseError {
 
     #[error("Failed to save record to database")]
     FailedToSave,
+
+    #[error("Failed to read record from database")]
+    FailedToRead,
+
+    #[error("Invalid credentials")]
+    InvalidCredentials,
 
     #[error("Failed to delete record to database")]
     FailedToDelete,

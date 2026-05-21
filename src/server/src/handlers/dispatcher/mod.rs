@@ -1,9 +1,9 @@
-pub mod user_dispatcher;
+pub mod achievement_dispatcher;
 pub mod garden_dispatcher;
 pub mod plant_dispatcher;
 pub mod plant_instance_dispatcher;
 pub mod task_dispatcher;
-pub mod achievement_dispatcher;
+pub mod user_dispatcher;
 pub mod weather_event_dispatcher;
 
 use crate::{

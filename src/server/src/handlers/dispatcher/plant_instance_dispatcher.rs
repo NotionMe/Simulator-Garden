@@ -15,18 +15,19 @@ pub async fn dispatch_plant_instance_command(
 
     match request.command {
         CommandType::Create => {
-            let dto = match serde_json::from_value::<CreatePlantInstanceDto>(request.payload.clone()) {
-                Ok(dto) => dto,
-                Err(err) => {
-                    return ResponseMessage {
-                        request_id: request.request_id,
-                        status: ResponseStatus::Error,
-                        command: request.command,
-                        data: None,
-                        error: Some(format!("Invalid payload: {}", err)),
-                    };
-                }
-            };
+            let dto =
+                match serde_json::from_value::<CreatePlantInstanceDto>(request.payload.clone()) {
+                    Ok(dto) => dto,
+                    Err(err) => {
+                        return ResponseMessage {
+                            request_id: request.request_id,
+                            status: ResponseStatus::Error,
+                            command: request.command,
+                            data: None,
+                            error: Some(format!("Invalid payload: {}", err)),
+                        };
+                    }
+                };
 
             match service.create_plant_instance(dto).await {
                 Ok(plant_instance) => ResponseMessage {
@@ -151,8 +152,12 @@ pub async fn dispatch_plant_instance_command(
 
         CommandType::List => {
             // Try to parse as GardenIdDto for filtering, otherwise get all
-            let result = if let Ok(garden_dto) = serde_json::from_value::<GardenIdDto>(request.payload.clone()) {
-                service.get_plant_instances_by_garden(garden_dto.garden_id).await
+            let result = if let Ok(garden_dto) =
+                serde_json::from_value::<GardenIdDto>(request.payload.clone())
+            {
+                service
+                    .get_plant_instances_by_garden(garden_dto.garden_id)
+                    .await
             } else {
                 service.get_all_plant_instances().await
             };
@@ -174,5 +179,13 @@ pub async fn dispatch_plant_instance_command(
                 },
             }
         }
+
+        CommandType::Login => ResponseMessage {
+            request_id: request.request_id,
+            status: ResponseStatus::Error,
+            command: request.command,
+            data: None,
+            error: Some("Unsupported command 'login' for resource 'plantinstance'".to_string()),
+        },
     }
 }

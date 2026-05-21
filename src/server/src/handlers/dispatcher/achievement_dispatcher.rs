@@ -1,5 +1,5 @@
 use crate::{
-    dto::{AchievementResponseDto, CreateAchievementDto, IdDto, UpdateAchievementDto, UserIdDto},
+    dto::{CreateAchievementDto, IdDto, UpdateAchievementDto, UserIdDto},
     handlers::messages::{CommandType, RequestMessage, ResponseMessage, ResponseStatus},
     repositories::achievement_repository::PgAchievementRepository,
     services::achievement_service::AchievementService,
@@ -15,7 +15,8 @@ pub async fn dispatch_achievement_command(
 
     match request.command {
         CommandType::Create => {
-            let dto = match serde_json::from_value::<CreateAchievementDto>(request.payload.clone()) {
+            let dto = match serde_json::from_value::<CreateAchievementDto>(request.payload.clone())
+            {
                 Ok(dto) => dto,
                 Err(err) => {
                     return ResponseMessage {
@@ -151,7 +152,9 @@ pub async fn dispatch_achievement_command(
 
         CommandType::List => {
             // Try to parse as UserIdDto for filtering by user_id
-            let result = if let Ok(user_dto) = serde_json::from_value::<UserIdDto>(request.payload.clone()) {
+            let result = if let Ok(user_dto) =
+                serde_json::from_value::<UserIdDto>(request.payload.clone())
+            {
                 service.get_achievements_by_user(user_dto.user_id).await
             } else {
                 // If no user_id provided, get all achievements
@@ -175,5 +178,13 @@ pub async fn dispatch_achievement_command(
                 },
             }
         }
+
+        CommandType::Login => ResponseMessage {
+            request_id: request.request_id,
+            status: ResponseStatus::Error,
+            command: request.command,
+            data: None,
+            error: Some("Unsupported command 'login' for resource 'achievement'".to_string()),
+        },
     }
 }

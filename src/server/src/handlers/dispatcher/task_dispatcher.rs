@@ -1,15 +1,12 @@
 use crate::{
-    dto::{CreateTaskDto, IdDto, PlantInstanceIdDto, UpdateTaskDto, TaskResponseDto},
+    dto::{CreateTaskDto, IdDto, PlantInstanceIdDto, TaskResponseDto, UpdateTaskDto},
     handlers::messages::{CommandType, RequestMessage, ResponseMessage, ResponseStatus},
     repositories::task_repository::PgTaskRepository,
     services::task_service::TaskService,
     state::app_state::AppState,
 };
 
-pub async fn dispatch_task_command(
-    request: RequestMessage,
-    state: AppState,
-) -> ResponseMessage {
+pub async fn dispatch_task_command(request: RequestMessage, state: AppState) -> ResponseMessage {
     let repo = PgTaskRepository::new(state.db_pool.clone());
     let service = TaskService::new(repo);
 
@@ -151,9 +148,13 @@ pub async fn dispatch_task_command(
 
         CommandType::List => {
             // Try to parse as PlantInstanceIdDto for filtering
-            let result = if let Ok(filter_dto) = serde_json::from_value::<PlantInstanceIdDto>(request.payload.clone()) {
+            let result = if let Ok(filter_dto) =
+                serde_json::from_value::<PlantInstanceIdDto>(request.payload.clone())
+            {
                 // Filter by plant_instance_id
-                service.get_tasks_by_plant_instance(filter_dto.plant_instance_id).await
+                service
+                    .get_tasks_by_plant_instance(filter_dto.plant_instance_id)
+                    .await
             } else {
                 // Get all tasks
                 service.get_all_tasks().await
@@ -176,5 +177,13 @@ pub async fn dispatch_task_command(
                 },
             }
         }
+
+        CommandType::Login => ResponseMessage {
+            request_id: request.request_id,
+            status: ResponseStatus::Error,
+            command: request.command,
+            data: None,
+            error: Some("Unsupported command 'login' for resource 'task'".to_string()),
+        },
     }
 }

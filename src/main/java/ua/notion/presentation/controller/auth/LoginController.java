@@ -22,12 +22,14 @@ public class LoginController {
   @FXML private Button registerButton;
   @FXML private Label errorLabel;
 
+  private final AuthenticationService authService;
   private final LoginViewModel viewModel;
   private Stage stage;
   private Runnable onLoginSuccess;
 
   @Inject
   public LoginController(AuthenticationService authService) {
+    this.authService = authService;
     this.viewModel = new LoginViewModel(authService);
   }
 
@@ -91,13 +93,7 @@ public class LoginController {
       javafx.fxml.FXMLLoader loader =
           new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/register.fxml"));
 
-      RegisterController registerController =
-          new RegisterController(
-              new AuthenticationService(
-                  com.google.inject.Guice.createInjector(
-                          new ua.notion.infrastructure.config.PersistenceModule(),
-                          new ua.notion.infrastructure.config.ServiceModule())
-                      .getInstance(ua.notion.infrastructure.persistence.PersistenceContext.class)));
+      RegisterController registerController = new RegisterController(authService);
       registerController.setStage(stage);
       registerController.setOnRegisterSuccess(
           () -> {

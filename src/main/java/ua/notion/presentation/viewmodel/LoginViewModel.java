@@ -7,6 +7,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import ua.notion.domain.entity.User;
 import ua.notion.domain.service.auth.AuthenticationService;
+import ua.notion.infrastructure.websocket.WebSocketApiException;
 
 public class LoginViewModel {
   private final AuthenticationService authService;
@@ -39,21 +40,38 @@ public class LoginViewModel {
   public Optional<User> login() {
     clearError();
 
-    String user = username.get().trim();
+    String identifier = username.get().trim();
     String pass = password.get();
 
-    if (user.isEmpty() || pass.isEmpty()) {
-      setError("Please enter username and password");
+    if (identifier.isEmpty() || pass.isEmpty()) {
+      setError("Please enter username or email and password");
       return Optional.empty();
     }
 
-    Optional<User> result = authService.authenticate(user, pass);
-
-    if (result.isEmpty()) {
-      setError("Invalid username or password");
+    try {
+      Optional<User> result = authService.login(identifier, pass);
+      if (result.isEmpty()) {
+        setError("Invalid username or password");
+      }
+      return result;
+    } catch (IllegalArgumentException e) {
+      setError(e.getMessage());
+      return Optional.empty();
+    } catch (WebSocketApiException e) {
+      setError(mapServerLoginError(e.getMessage()));
+      return Optional.empty();
     }
+  }
 
-    return result;
+  private static String mapServerLoginError(String serverMessage) {
+    if (serverMessage == null || serverMessage.isBlank()) {
+      return "Login failed";
+    }
+    return switch (serverMessage) {
+      case "Invalid credentials" -> "Invalid username or password";
+      case "Record not found" -> "User not found";
+      default -> serverMessage;
+    };
   }
 
   public void clearError() {

@@ -1,10 +1,11 @@
 use chrono::Utc;
 
 use crate::{
-    dto::{CreateUserDto, UpdateUserDto, UserResponseDto},
+    dto::{CreateUserDto, LoginIdentifier, LoginUserDto, UpdateUserDto, UserResponseDto},
     errors::error::{DatabaseError, DbResult},
     models::User,
     repositories::user_repository::UserRepository,
+    services::auth::authorization_service::AuthorizationService,
 };
 
 pub struct UserService<R>
@@ -39,17 +40,34 @@ where
             return Err(DatabaseError::FailedToSave);
         }
 
+        let auth_service = AuthorizationService::new();
+        let password_hash = auth_service
+            .hash_password(&dto.password)
+            .map_err(|_| DatabaseError::FailedToSave)?;
+
         let user = User {
             id: 0,
             username: dto.username,
             email: dto.email,
-            password_hash: dto.password_hash,
+            password_hash,
             created_at: Utc::now().naive_utc(),
         };
 
         let created = self.repo.create(user).await?;
 
         Ok(UserResponseDto::from(created))
+    }
+
+    pub async fn login_user(&self, dto: LoginUserDto) -> DbResult<UserResponseDto> {
+        let user = match dto.identifier().ok_or(DatabaseError::FailedToRead)? {
+            LoginIdentifier::Username(username) => self.repo.find_by_username(username).await?,
+            LoginIdentifier::Email(email) => self.repo.find_by_email(email).await?,
+        }
+        .ok_or(DatabaseError::NotFound)?;
+
+        AuthorizationService::new().authenticate_login(&dto.password, &user.password_hash)?;
+
+        Ok(UserResponseDto::from(user))
     }
 
     pub async fn get_user(&self, id: i32) -> DbResult<UserResponseDto> {
@@ -109,8 +127,10 @@ where
             user.email = email;
         }
 
-        if let Some(password_hash) = dto.password_hash {
-            user.password_hash = password_hash;
+        if let Some(password) = dto.password {
+            user.password_hash = AuthorizationService::new()
+                .hash_password(&password)
+                .map_err(|_| DatabaseError::FailedToUpdate)?;
         }
 
         let updated = self.repo.update(id, user).await?;

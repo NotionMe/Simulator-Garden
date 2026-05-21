@@ -1,15 +1,12 @@
 use crate::{
-    dto::{CreatePlantDto, IdDto, PlantResponseDto, UpdatePlantDto},
+    dto::{CreatePlantDto, IdDto, UpdatePlantDto},
     handlers::messages::{CommandType, RequestMessage, ResponseMessage, ResponseStatus},
     repositories::plant_repository::PgPlantRepository,
     services::plant_service::PlantService,
     state::app_state::AppState,
 };
 
-pub async fn dispatch_plant_command(
-    request: RequestMessage,
-    state: AppState,
-) -> ResponseMessage {
+pub async fn dispatch_plant_command(request: RequestMessage, state: AppState) -> ResponseMessage {
     let repo = PgPlantRepository::new(state.db_pool.clone());
     let service = PlantService::new(repo);
 
@@ -164,6 +161,14 @@ pub async fn dispatch_plant_command(
                 data: None,
                 error: Some(err.to_string()),
             },
+        },
+
+        CommandType::Login => ResponseMessage {
+            request_id: request.request_id,
+            status: ResponseStatus::Error,
+            command: request.command,
+            data: None,
+            error: Some("Unsupported command 'login' for resource 'plant'".to_string()),
         },
     }
 }

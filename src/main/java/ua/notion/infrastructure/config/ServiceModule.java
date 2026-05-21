@@ -11,7 +11,9 @@ import ua.notion.domain.service.TaskService;
 import ua.notion.domain.service.UserService;
 import ua.notion.domain.service.WeatherEventService;
 import ua.notion.domain.service.auth.AuthenticationService;
+import ua.notion.domain.service.auth.WebSocketAuthenticationService;
 import ua.notion.infrastructure.persistence.PersistenceContext;
+import ua.notion.infrastructure.websocket.WebSocketApiClient;
 
 public class ServiceModule extends AbstractModule {
 
@@ -64,7 +66,7 @@ public class ServiceModule extends AbstractModule {
 
   @Provides
   @Singleton
-  AuthenticationService provideAuthenticationService(PersistenceContext context) {
-    return new AuthenticationService(context);
+  AuthenticationService provideAuthenticationService(WebSocketApiClient apiClient) {
+    return new WebSocketAuthenticationService(apiClient);
   }
 }

@@ -1,15 +1,12 @@
 use crate::{
-    dto::{CreateGardenDto, GardenIdDto, IdDto, UpdateGardenDto, UserIdDto},
+    dto::{CreateGardenDto, IdDto, UpdateGardenDto, UserIdDto},
     handlers::messages::{CommandType, RequestMessage, ResponseMessage, ResponseStatus},
     repositories::garden_repository::PgGardenRepository,
     services::garden_service::GardenService,
     state::app_state::AppState,
 };
 
-pub async fn dispatch_garden_command(
-    request: RequestMessage,
-    state: AppState,
-) -> ResponseMessage {
+pub async fn dispatch_garden_command(request: RequestMessage, state: AppState) -> ResponseMessage {
     let repo = PgGardenRepository::new(state.db_pool.clone());
     let service = GardenService::new(repo);
 
@@ -188,5 +185,13 @@ pub async fn dispatch_garden_command(
                 }
             }
         }
+
+        CommandType::Login => ResponseMessage {
+            request_id: request.request_id,
+            status: ResponseStatus::Error,
+            command: request.command,
+            data: None,
+            error: Some("Unsupported command 'login' for resource 'garden'".to_string()),
+        },
     }
 }

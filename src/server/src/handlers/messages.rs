@@ -32,6 +32,7 @@ pub enum CommandType {
     Update,
     Delete,
     List,
+    Login,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
