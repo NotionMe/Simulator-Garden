@@ -41,10 +41,8 @@ public class PlantManager {
       double screenX = orthoCoords.toScreenX(plant.getTileX(), plant.getTileY()) + offsetX;
       double screenY = orthoCoords.toScreenY(plant.getTileX(), plant.getTileY()) + offsetY;
 
-      double destWidth = PlantBasesAtlas.TILE_WIDTH * scale;
-      double destHeight = PlantBasesAtlas.TILE_HEIGHT * scale;
-
-      plant.render(gc, screenX + 24.0 - destWidth / 2.0, screenY + 48.0 - destHeight, scale);
+      double destSize = PlantBasesAtlas.SOURCE_CELL_SIZE * scale;
+      plant.render(gc, screenX + 48.0 - destSize / 2.0, screenY + 48.0 - destSize / 2.0, scale);
     }
   }
 

@@ -2,11 +2,18 @@ package ua.notion.presentation.game;
 
 import java.util.ArrayList;
 import java.util.List;
+import javafx.animation.AnimationTimer;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import ua.notion.infrastructure.async.AsyncExecutor;
+import ua.notion.presentation.controller.SeedPlantingModalController;
+import ua.notion.presentation.game.assets.GardenTileAtlas;
 import ua.notion.presentation.game.viewmodel.GameViewModel;
 
 public class GameScene {
@@ -16,6 +23,12 @@ public class GameScene {
   private GameLoop gameLoop;
   private Image backgroundImage;
   private boolean isLoading = true;
+
+  private Pane seedPickerOverlay;
+  private SeedPlantingModalController seedPickerController;
+  private AnimationTimer seedPickerPositionTimer;
+  private int pendingBedCol = -1;
+  private int pendingBedRow = -1;
 
   public GameScene() {
     this.canvas = new Canvas(GameConstants.CANVAS_WIDTH, GameConstants.CANVAS_HEIGHT);
@@ -33,7 +46,13 @@ public class GameScene {
 
   private void setupInputHandlers() {
     canvas.setFocusTraversable(true);
-    canvas.setOnKeyPressed(viewModel.getKeyboardHandler()::handleKeyPressed);
+    canvas.setOnKeyPressed(
+        event -> {
+          viewModel.getKeyboardHandler().handleKeyPressed(event);
+          if (event.getCode() == KeyCode.ESCAPE && seedPickerOverlay != null) {
+            closeSeedPicker();
+          }
+        });
     canvas.setOnKeyReleased(viewModel.getKeyboardHandler()::handleKeyReleased);
     canvas.setOnMouseClicked(this::handleMouseClick);
   }
@@ -55,12 +74,22 @@ public class GameScene {
       System.out.println(
           "Clicked at screen (" + mouseX + ", " + mouseY + ") -> tile (" + col + ", " + row + ")");
 
-      // Check if clicked on dirt tile (ID 10)
       if (isValidTile(col, row)) {
         int tileId = getTileId(col, row);
         System.out.println("Tile ID: " + tileId);
-        if (tileId == 10) {
-          showSeedPlantingModal(col, row);
+
+        if (seedPickerOverlay != null) {
+          if (GardenTileAtlas.isGardenBed(tileId)) {
+            pendingBedCol = col;
+            pendingBedRow = row;
+          } else {
+            closeSeedPicker();
+          }
+          return;
+        }
+
+        if (GardenTileAtlas.isGardenBed(tileId)) {
+          showSeedPicker(col, row);
         }
       }
     }
@@ -96,32 +125,112 @@ public class GameScene {
     return viewModel.getTileMap().getTileId(col, row);
   }
 
-  private void showSeedPlantingModal(int col, int row) {
-    // Pause game loop while modal is open to prevent flickering
-    if (gameLoop != null) {
-      gameLoop.stop();
-    }
+  private void showSeedPicker(int col, int row) {
+    closeSeedPicker();
+    pendingBedCol = col;
+    pendingBedRow = row;
 
-    var modal =
-        ua.notion.presentation.controller.SeedPlantingModalController.createModal(
+    Pane overlay =
+        SeedPlantingModalController.createPicker(
             viewModel.getSeedInventory(),
-            plantType -> {
-              // Plant the seed at the clicked location
-              if (viewModel.getSeedInventory().consumeSeed(plantType)) {
-                viewModel.getPlantManager().plantSeed(plantType, col, row);
-                System.out.println("Planted " + plantType + " at (" + col + ", " + row + ")");
-              }
-            },
-            () -> {
-              // Resume game loop when modal closes
-              if (gameLoop != null) {
-                gameLoop.start();
-              }
-            });
+            plantType -> plantOnPendingBed(plantType),
+            this::onSeedPickerClosed,
+            controller -> seedPickerController = controller);
 
-    if (modal != null && canvas.getParent() instanceof javafx.scene.layout.StackPane) {
-      ((javafx.scene.layout.StackPane) canvas.getParent()).getChildren().add(modal);
+    if (overlay == null || !(canvas.getParent() instanceof StackPane stack)) {
+      return;
     }
+
+    seedPickerOverlay = overlay;
+    stack.getChildren().add(overlay);
+    startSeedPickerTracking();
+    updateSeedPickerPosition();
+  }
+
+  private void plantOnPendingBed(
+      ua.notion.presentation.game.assets.PlantBasesAtlas.PlantType plantType) {
+    if (pendingBedCol < 0 || pendingBedRow < 0) {
+      return;
+    }
+    int tileId = getTileId(pendingBedCol, pendingBedRow);
+    int[] anchor = GardenTileAtlas.bedAnchorForTile(tileId, pendingBedCol, pendingBedRow);
+    if (viewModel.getPlantManager().hasPlantAt(anchor[0], anchor[1])) {
+      System.out.println("Bed already has a plant");
+      return;
+    }
+    if (!viewModel.getSeedInventory().consumeSeed(plantType)) {
+      return;
+    }
+    viewModel.getPlantManager().plantSeed(plantType, anchor[0], anchor[1]);
+    System.out.println("Planted " + plantType + " at bed (" + anchor[0] + ", " + anchor[1] + ")");
+  }
+
+  private void onSeedPickerClosed() {
+    stopSeedPickerTracking();
+    seedPickerController = null;
+    seedPickerOverlay = null;
+    pendingBedCol = -1;
+    pendingBedRow = -1;
+  }
+
+  private void closeSeedPicker() {
+    if (seedPickerController != null) {
+      seedPickerController.close();
+    } else {
+      onSeedPickerClosed();
+    }
+  }
+
+  private void startSeedPickerTracking() {
+    stopSeedPickerTracking();
+    seedPickerPositionTimer =
+        new AnimationTimer() {
+          @Override
+          public void handle(long now) {
+            updateSeedPickerPosition();
+          }
+        };
+    seedPickerPositionTimer.start();
+  }
+
+  private void stopSeedPickerTracking() {
+    if (seedPickerPositionTimer != null) {
+      seedPickerPositionTimer.stop();
+      seedPickerPositionTimer = null;
+    }
+  }
+
+  private void updateSeedPickerPosition() {
+    if (seedPickerController == null || seedPickerOverlay == null) {
+      return;
+    }
+
+    Region panel =
+        seedPickerController.getPickerBar().isVisible()
+            ? seedPickerController.getPickerBar()
+            : seedPickerController.getEmptyState();
+
+    panel.applyCss();
+    panel.autosize();
+
+    double panelW = panel.getWidth();
+    double panelH = panel.getHeight();
+    if (panelW <= 0 || panelH <= 0) {
+      panelW = panel.prefWidth(-1);
+      panelH = panel.prefHeight(-1);
+    }
+
+    double playerCenterX = viewModel.getPlayer().getX() + getCameraOffsetX() + 24.0;
+    double playerTopY = viewModel.getPlayer().getY() + getCameraOffsetY();
+
+    double x = playerCenterX - panelW / 2.0;
+    double y = playerTopY - panelH - 14.0;
+
+    x = Math.max(8.0, Math.min(x, canvas.getWidth() - panelW - 8.0));
+    y = Math.max(8.0, y);
+
+    panel.setLayoutX(x);
+    panel.setLayoutY(y);
   }
 
   public void initialize() {
@@ -165,6 +274,7 @@ public class GameScene {
   }
 
   public void stop() {
+    closeSeedPicker();
     if (gameLoop != null) {
       gameLoop.stop();
       System.out.println("Game loop stopped");
@@ -246,13 +356,11 @@ public class GameScene {
                             .getOrthoCoords()
                             .toScreenY(plant.getTileX(), plant.getTileY())
                         + offsetY;
-                double scale = 4.0;
-                double destWidth =
-                    ua.notion.presentation.game.assets.PlantBasesAtlas.TILE_WIDTH * scale;
-                double destHeight =
-                    ua.notion.presentation.game.assets.PlantBasesAtlas.TILE_HEIGHT * scale;
+                double scale = ua.notion.presentation.game.assets.PlantBasesAtlas.RENDER_SCALE;
+                double destSize =
+                    ua.notion.presentation.game.assets.PlantBasesAtlas.SOURCE_CELL_SIZE * scale;
                 plant.render(
-                    gc, screenX + 24.0 - destWidth / 2.0, screenY + 48.0 - destHeight, scale);
+                    gc, screenX + 48.0 - destSize / 2.0, screenY + 48.0 - destSize / 2.0, scale);
               }));
     }
 
@@ -280,7 +388,7 @@ public class GameScene {
     gc.setLineWidth(2);
     gc.strokeText("FPS: " + gameLoop.getFps(), 10, 20);
     gc.fillText("FPS: " + gameLoop.getFps(), 10, 20);
-    gc.fillText("WASD to move, G to grow plants", 10, 40);
+    gc.fillText("WASD to move, G to grow · click bed to plant · Esc to close", 10, 40);
   }
 
   public Canvas getCanvas() {

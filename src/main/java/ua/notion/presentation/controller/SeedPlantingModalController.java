@@ -1,150 +1,145 @@
 package ua.notion.presentation.controller;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.layout.GridPane;
+import javafx.scene.control.Tooltip;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import ua.notion.presentation.game.assets.PlantBasesAtlas.PlantType;
+import ua.notion.presentation.game.assets.PlantIconCache;
 import ua.notion.presentation.viewmodel.SeedInventoryViewModel;
 import ua.notion.presentation.viewmodel.SeedInventoryViewModel.SeedItem;
 
 public class SeedPlantingModalController {
 
-  @FXML private GridPane seedGrid;
+  @FXML private Pane overlayRoot;
+  @FXML private HBox pickerBar;
   @FXML private VBox emptyState;
 
   private SeedInventoryViewModel viewModel;
-  private StackPane modalRoot;
   private SeedSelectionCallback callback;
   private Runnable onCloseCallback;
 
   public void initialize(
-      SeedInventoryViewModel viewModel,
-      StackPane modalRoot,
-      SeedSelectionCallback callback,
-      Runnable onCloseCallback) {
+      SeedInventoryViewModel viewModel, SeedSelectionCallback callback, Runnable onCloseCallback) {
     this.viewModel = viewModel;
-    this.modalRoot = modalRoot;
     this.callback = callback;
     this.onCloseCallback = onCloseCallback;
-
-    populateSeedGrid();
+    populatePicker();
   }
 
-  private void populateSeedGrid() {
+  private void populatePicker() {
     var availableSeeds = viewModel.getAvailableSeeds();
 
     if (availableSeeds.isEmpty()) {
-      seedGrid.setVisible(false);
-      seedGrid.setManaged(false);
+      pickerBar.setVisible(false);
+      pickerBar.setManaged(false);
       emptyState.setVisible(true);
       emptyState.setManaged(true);
       return;
     }
 
-    int column = 0;
-    int row = 0;
-    int maxColumns = 3;
-
+    pickerBar.getChildren().clear();
     for (SeedItem seedItem : availableSeeds) {
-      VBox seedCard = createSeedCard(seedItem);
-      seedGrid.add(seedCard, column, row);
-
-      column++;
-      if (column >= maxColumns) {
-        column = 0;
-        row++;
-      }
+      pickerBar.getChildren().add(createSeedSlot(seedItem));
     }
+    pickerBar.setVisible(true);
+    pickerBar.setManaged(true);
+    emptyState.setVisible(false);
+    emptyState.setManaged(false);
   }
 
-  private VBox createSeedCard(SeedItem seedItem) {
-    VBox card = new VBox(12);
-    card.setAlignment(Pos.CENTER);
-    card.getStyleClass().add("seed-card");
-    card.setMinWidth(120);
-    card.setMaxWidth(120);
+  private StackPane createSeedSlot(SeedItem seedItem) {
+    StackPane slot = new StackPane();
+    slot.getStyleClass().add("seed-slot");
+    slot.setAlignment(Pos.CENTER);
 
-    // Seed icon placeholder
-    VBox iconBox = new VBox();
-    iconBox.getStyleClass().add("seed-icon");
-    iconBox.setAlignment(Pos.CENTER);
-
-    // Seed name
-    Label nameLabel = new Label(seedItem.getDisplayName());
-    nameLabel.getStyleClass().add("seed-name");
-
-    // Seed count badge
-    VBox countBadge = new VBox();
-    countBadge.getStyleClass().add("seed-count");
-    countBadge.setAlignment(Pos.CENTER);
+    ImageView icon = new ImageView(PlantIconCache.getIcon(seedItem.getPlantType()));
+    icon.getStyleClass().add("seed-slot-icon");
 
     Label countLabel = new Label("×" + seedItem.getCount());
-    countLabel.getStyleClass().add("seed-count-text");
-    countBadge.getChildren().add(countLabel);
+    countLabel.getStyleClass().add("seed-slot-count");
+    StackPane.setAlignment(countLabel, Pos.TOP_RIGHT);
 
-    // Bind count to property for live updates
     seedItem
         .countProperty()
         .addListener(
             (obs, oldVal, newVal) -> {
               countLabel.setText("×" + newVal);
-              if (newVal.intValue() <= 0) {
-                card.setDisable(true);
-              }
+              slot.setDisable(newVal.intValue() <= 0);
             });
 
-    // Growth info
-    Label infoLabel = new Label(seedItem.getGrowthInfo());
-    infoLabel.getStyleClass().add("seed-info");
+    Tooltip tooltip = new Tooltip(seedItem.getDisplayName() + " · " + seedItem.getGrowthInfo());
+    Tooltip.install(slot, tooltip);
 
-    card.getChildren().addAll(iconBox, nameLabel, countBadge, infoLabel);
+    slot.getChildren().addAll(icon, countLabel);
 
-    // Click handler
-    card.setOnMouseClicked(
+    slot.setOnMouseClicked(
         event -> {
+          event.consume();
           if (callback != null) {
             callback.onSeedSelected(seedItem.getPlantType());
           }
-          closeModal();
+          close();
         });
 
-    return card;
+    return slot;
   }
 
-  @FXML
-  private void closeModal() {
-    if (modalRoot != null && modalRoot.getParent() instanceof StackPane) {
-      ((StackPane) modalRoot.getParent()).getChildren().remove(modalRoot);
+  public void close() {
+    if (overlayRoot != null && overlayRoot.getParent() instanceof Pane parent) {
+      parent.getChildren().remove(overlayRoot);
+    } else if (overlayRoot != null && overlayRoot.getParent() instanceof StackPane stack) {
+      stack.getChildren().remove(overlayRoot);
     }
     if (onCloseCallback != null) {
       onCloseCallback.run();
     }
   }
 
-  public static StackPane createModal(
-      SeedInventoryViewModel viewModel, SeedSelectionCallback callback, Runnable onCloseCallback) {
+  public Pane getOverlayRoot() {
+    return overlayRoot;
+  }
+
+  public HBox getPickerBar() {
+    return pickerBar;
+  }
+
+  public VBox getEmptyState() {
+    return emptyState;
+  }
+
+  public static Pane createPicker(
+      SeedInventoryViewModel viewModel,
+      SeedSelectionCallback callback,
+      Runnable onCloseCallback,
+      Consumer<SeedPlantingModalController> onReady) {
     try {
       FXMLLoader loader =
           new FXMLLoader(
               SeedPlantingModalController.class.getResource("/fxml/seed_planting_modal.fxml"));
-      StackPane modalRoot = loader.load();
+      Pane overlay = loader.load();
 
-      SeedPlantingModalController controller = loader.getController();
-      controller.initialize(viewModel, modalRoot, callback, onCloseCallback);
-
-      // Load CSS
-      modalRoot
+      overlay
           .getStylesheets()
           .add(
               SeedPlantingModalController.class
                   .getResource("/css/seed_modal.css")
                   .toExternalForm());
 
-      return modalRoot;
+      SeedPlantingModalController controller = loader.getController();
+      controller.initialize(viewModel, callback, onCloseCallback);
+      if (onReady != null) {
+        onReady.accept(controller);
+      }
+      return overlay;
     } catch (IOException e) {
       e.printStackTrace();
       return null;
@@ -153,6 +148,6 @@ public class SeedPlantingModalController {
 
   @FunctionalInterface
   public interface SeedSelectionCallback {
-    void onSeedSelected(ua.notion.presentation.game.assets.PlantBasesAtlas.PlantType plantType);
+    void onSeedSelected(PlantType plantType);
   }
 }

@@ -6,40 +6,51 @@ public final class PlantBasesAtlas {
     throw new AssertionError("Cannot instantiate constants class");
   }
 
-  public static final int TILE_WIDTH = 64;
-  public static final int TILE_HEIGHT = 64;
-  public static final int COLUMNS = 10; // всього колонок у sprite sheet (416/16)
-  public static final int ROWS = 5; // всього рядків у sprite sheet (288/16)
+  /** Source grid cell size in Garden_Planters_PlantBases.png (see ReadMe: 16x16). */
+  public static final int SOURCE_CELL_SIZE = 16;
+
+  /** Default horizontal step between growth frames (columns 4, 6, 8, …). */
+  public static final int DEFAULT_COLUMN_STEP = 2;
+
+  /** Scale when drawing on the 48px map grid (16 * 3 = 48). */
+  public static final double RENDER_SCALE = 3.0;
+
+  public static final int COLUMNS = 26;
+  public static final int ROWS = 18;
 
   public static final String SPRITE_PATH = "Garden_Planters/Garden_Planters_PlantBases.png";
 
-  // Шари горщика (верхні 2 рядки)
   public enum PotLayer {
-    BACKGROUND, // задній фон горщика
-    FOREGROUND // передня стінка горщика для Z-ordering
+    BACKGROUND,
+    FOREGROUND
   }
 
-  // Типи рослин (рядки 3-7, по 2 рослини в рядку)
+  /**
+   * Plant rows in the 16px grid (verified against Garden_Planters_PlantBases.png).
+   * startRow/startColumn = top-left growth frame; columnStep = spacing to next stage.
+   */
   public enum PlantType {
-    SUCCULENT(2, 0, 5), // Рядок 3, ліворуч, 5 стадій
-    BEAN(2, 13, 6), // Рядок 3, праворуч, 6 стадій
-    CORN(4, 0, 6), // Рядок 4, ліворуч, 6 стадій
-    POTATO(4, 13, 6), // Рядок 4, праворуч, 6 стадій
-    TOMATO(6, 0, 6), // Рядок 5, ліворуч, 6 стадій
-    TURNIP(6, 13, 5), // Рядок 5, праворуч, 5 стадій
-    SUNFLOWER(8, 0, 5), // Рядок 6, ліворуч, 5 стадій
-    BLUEBERRY(8, 13, 6), // Рядок 6, праворуч, 6 стадій
-    STRAWBERRY(10, 0, 6), // Рядок 7, ліворуч, 6 стадій
-    CARROT(10, 13, 5); // Рядок 7, праворуч, 5 стадій
+    SUCCULENT(8, 6, 2, 2),
+    BEAN(4, 19, 3, 2),
+    CORN(4, 4, 3, 2),
+    POTATO(5, 4, 3, 2),
+    TOMATO(5, 2, 5, 2),
+    TURNIP(5, 19, 3, 2),
+    SUNFLOWER(12, 4, 3, 2),
+    BLUEBERRY(9, 18, 3, 2),
+    STRAWBERRY(13, 4, 4, 2),
+    CARROT(13, 18, 3, 2);
 
     private final int startRow;
     private final int startColumn;
     private final int stageCount;
+    private final int columnStep;
 
-    PlantType(int startRow, int startColumn, int stageCount) {
+    PlantType(int startRow, int startColumn, int stageCount, int columnStep) {
       this.startRow = startRow;
       this.startColumn = startColumn;
       this.stageCount = stageCount;
+      this.columnStep = columnStep;
     }
 
     public int getStartRow() {
@@ -53,16 +64,19 @@ public final class PlantBasesAtlas {
     public int getStageCount() {
       return stageCount;
     }
+
+    public int getColumnStep() {
+      return columnStep;
+    }
   }
 
-  // Стадії росту
   public enum GrowthStage {
-    SEED(0), // Насіння
-    SPROUT(1), // Паросток
-    GROWING(2), // Ріст
-    BLOOMING(3), // Цвітіння
-    FRUITING(4), // Плодоношення
-    WITHERED(5); // Зів'янення (не у всіх)
+    SEED(0),
+    SPROUT(1),
+    GROWING(2),
+    BLOOMING(3),
+    FRUITING(4),
+    WITHERED(5);
 
     private final int offset;
 
@@ -87,39 +101,29 @@ public final class PlantBasesAtlas {
     }
   }
 
-  // Координати для горщиків (верхні 2 рядки)
-  public static int getPotX(int potIndex) {
-    return potIndex * TILE_WIDTH;
-  }
-
-  public static int getPotBackgroundY() {
-    return 0; // перший рядок
-  }
-
-  public static int getPotForegroundY() {
-    return TILE_HEIGHT; // другий рядок
-  }
-
-  // Координати для рослин
   public static int getPlantX(PlantType type, GrowthStage stage) {
-    if (stage.getOffset() >= type.getStageCount()) {
-      return type.getStartColumn() + (type.getStageCount() - 1) * TILE_WIDTH;
-    }
-    return type.getStartColumn() * TILE_WIDTH + stage.getOffset() * TILE_WIDTH;
+    int stageIndex = Math.min(stage.getOffset(), type.getStageCount() - 1);
+    int col = type.getStartColumn() + stageIndex * type.getColumnStep();
+    return col * SOURCE_CELL_SIZE;
   }
 
   public static int getPlantY(PlantType type) {
-    return type.getStartRow() * TILE_HEIGHT;
+    return type.getStartRow() * SOURCE_CELL_SIZE;
   }
 
-  // Старі методи для сумісності
-  @Deprecated
-  public static int getX(GrowthStage stage) {
-    return stage.getOffset() * TILE_WIDTH;
+  public static int getRenderSize() {
+    return (int) (SOURCE_CELL_SIZE * RENDER_SCALE);
   }
 
-  @Deprecated
-  public static int getY(PlantType type) {
-    return type.getStartRow() * TILE_HEIGHT;
+  public static int getPotX(int potIndex) {
+    return potIndex * SOURCE_CELL_SIZE * 4;
+  }
+
+  public static int getPotBackgroundY() {
+    return 0;
+  }
+
+  public static int getPotForegroundY() {
+    return SOURCE_CELL_SIZE;
   }
 }

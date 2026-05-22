@@ -17,6 +17,8 @@ use crate::{
 pub async fn handle_socket(mut socket: WebSocket, state: AppState) {
     while let Some(Ok(msg)) = socket.recv().await {
         if let Message::Text(text) = msg {
+            // перевіряти чи запрос verified!
+            
             let request = match serde_json::from_str::<RequestMessage>(&text) {
                 Ok(request) => request,
                 Err(err) => {

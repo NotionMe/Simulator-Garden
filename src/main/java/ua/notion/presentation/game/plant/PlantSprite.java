@@ -66,28 +66,23 @@ public class PlantSprite {
       return;
     }
 
+    int cell = PlantBasesAtlas.SOURCE_CELL_SIZE;
     int sourceX = PlantBasesAtlas.getPlantX(plantType, currentStage);
     int sourceY = PlantBasesAtlas.getPlantY(plantType);
-    double destWidth = PlantBasesAtlas.TILE_WIDTH * scale;
-    double destHeight = PlantBasesAtlas.TILE_HEIGHT * scale;
+    double destWidth = cell * scale;
+    double destHeight = cell * scale;
 
+    gc.setImageSmoothing(false);
     gc.drawImage(
-        plantBasesSheet,
-        sourceX,
-        sourceY,
-        PlantBasesAtlas.TILE_WIDTH,
-        PlantBasesAtlas.TILE_HEIGHT,
-        screenX,
-        screenY,
-        destWidth,
-        destHeight);
+        plantBasesSheet, sourceX, sourceY, cell, cell, screenX, screenY, destWidth, destHeight);
+    gc.setImageSmoothing(true);
   }
 
   public Rectangle2D getViewport() {
+    int cell = PlantBasesAtlas.SOURCE_CELL_SIZE;
     int sourceX = PlantBasesAtlas.getPlantX(plantType, currentStage);
     int sourceY = PlantBasesAtlas.getPlantY(plantType);
-    return new Rectangle2D(
-        sourceX, sourceY, PlantBasesAtlas.TILE_WIDTH, PlantBasesAtlas.TILE_HEIGHT);
+    return new Rectangle2D(sourceX, sourceY, cell, cell);
   }
 
   public PlantType getPlantType() {
