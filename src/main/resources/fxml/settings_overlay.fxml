@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="ua.notion.presentation.controller.SettingsController"
+           styleClass="overlay-wrapper"
+           pickOnBounds="true">
+
+    <Region styleClass="overlay-backdrop" onMouseClicked="#handleBackdropClick"/>
+
+    <VBox styleClass="settings-panel" spacing="16" maxWidth="400" StackPane.alignment="CENTER">
+        <padding>
+            <Insets top="24" right="28" bottom="24" left="28"/>
+        </padding>
+
+        <HBox alignment="CENTER_LEFT" spacing="8">
+            <Label text="Settings" styleClass="settings-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="×" styleClass="settings-close" onAction="#handleClose"/>
+        </HBox>
+
+        <Separator/>
+
+        <VBox spacing="10">
+            <Label text="Audio" styleClass="settings-section"/>
+            <CheckBox fx:id="soundEnabledCheck" text="Sound enabled"/>
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <Label text="Volume" minWidth="60"/>
+                <Slider fx:id="volumeSlider" min="0" max="1" value="0.8" HBox.hgrow="ALWAYS"/>
+            </HBox>
+        </VBox>
+
+        <VBox spacing="10">
+            <Label text="Game" styleClass="settings-section"/>
+            <CheckBox fx:id="debugHintsCheck" text="Show debug hints in game"/>
+        </VBox>
+
+        <VBox spacing="10">
+            <Label text="Language" styleClass="settings-section"/>
+            <ComboBox fx:id="languageCombo" prefWidth="200"/>
+        </VBox>
+
+        <HBox spacing="12" alignment="CENTER_RIGHT">
+            <Button text="Cancel" styleClass="settings-secondary" onAction="#handleClose"/>
+            <Button text="Save" styleClass="settings-primary" onAction="#handleSave"/>
+        </HBox>
+    </VBox>
+</StackPane>

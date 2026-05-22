@@ -5,14 +5,10 @@ import java.io.IOException;
 import java.util.Optional;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.stage.Stage;
 import ua.notion.domain.entity.Plant;
 import ua.notion.domain.entity.User;
 import ua.notion.presentation.viewmodel.PlantCatalogViewModel;
@@ -268,15 +264,7 @@ public class PlantCatalogController {
   @FXML
   private void handleBack() {
     try {
-      FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/menu.fxml"));
-      Parent root = loader.load();
-
-      MenuController controller = loader.getController();
-      controller.setCurrentUser(currentUser);
-
-      Stage stage = (Stage) backButton.getScene().getWindow();
-      Scene scene = new Scene(root, 800, 600);
-      stage.setScene(scene);
+      ua.notion.presentation.ui.SceneCoordinator.forNode(backButton).navigateToMenu(currentUser);
     } catch (IOException e) {
       showError("Error", "Failed to return to menu: " + e.getMessage());
     }

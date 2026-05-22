@@ -1,0 +1,54 @@
+.settings-panel {
+    -fx-background-color: rgba(28, 32, 28, 0.97);
+    -fx-background-radius: 16;
+    -fx-border-color: #6b8e5a;
+    -fx-border-width: 2;
+    -fx-border-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 20, 0.3, 0, 6);
+}
+
+.settings-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #e8f5e9;
+}
+
+.settings-section {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #a5d6a7;
+}
+
+.settings-close {
+    -fx-background-color: #455a44;
+    -fx-text-fill: #e8f5e9;
+    -fx-font-size: 16px;
+    -fx-min-width: 28;
+    -fx-min-height: 28;
+    -fx-background-radius: 14;
+    -fx-cursor: hand;
+}
+
+.settings-primary {
+    -fx-background-color: linear-gradient(to bottom, #66bb6a, #4caf50);
+    -fx-text-fill: white;
+    -fx-background-radius: 10;
+    -fx-padding: 8 20;
+    -fx-cursor: hand;
+}
+
+.settings-secondary {
+    -fx-background-color: #455a44;
+    -fx-text-fill: #e8f5e9;
+    -fx-background-radius: 10;
+    -fx-padding: 8 20;
+    -fx-cursor: hand;
+}
+
+.settings-panel .check-box {
+    -fx-text-fill: #e8f5e9;
+}
+
+.settings-panel .label {
+    -fx-text-fill: #c8e6c9;
+}

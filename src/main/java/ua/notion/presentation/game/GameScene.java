@@ -28,7 +28,7 @@ public class GameScene {
 
   private Pane seedPickerOverlay;
   private SeedPlantingModalController seedPickerController;
-  private AnimationTimer seedPickerPositionTimer;
+  private AnimationTimer uiOverlayTimer;
   private int pendingBedCol = -1;
   private int pendingBedRow = -1;
   private int harvestMessageTicks;
@@ -41,13 +41,6 @@ public class GameScene {
     this.gc = canvas.getGraphicsContext2D();
     this.viewModel = new GameViewModel(GameConstants.MAP_WIDTH, GameConstants.MAP_HEIGHT);
     setupInputHandlers();
-    setupResponsiveCanvas();
-  }
-
-  private void setupResponsiveCanvas() {
-    // Make canvas responsive to parent container size
-    canvas.widthProperty().addListener((obs, oldVal, newVal) -> render());
-    canvas.heightProperty().addListener((obs, oldVal, newVal) -> render());
   }
 
   private void setupInputHandlers() {
@@ -169,7 +162,7 @@ public class GameScene {
 
     seedPickerOverlay = overlay;
     stack.getChildren().add(overlay);
-    startSeedPickerTracking();
+    startUiOverlayTimer();
     updateSeedPickerPosition();
   }
 
@@ -192,11 +185,11 @@ public class GameScene {
   }
 
   private void onSeedPickerClosed() {
-    stopSeedPickerTracking();
     seedPickerController = null;
     seedPickerOverlay = null;
     pendingBedCol = -1;
     pendingBedRow = -1;
+    stopUiOverlayTimerIfIdle();
   }
 
   private void closeSeedPicker() {
@@ -207,22 +200,29 @@ public class GameScene {
     }
   }
 
-  private void startSeedPickerTracking() {
-    stopSeedPickerTracking();
-    seedPickerPositionTimer =
+  private void startUiOverlayTimer() {
+    if (uiOverlayTimer != null) {
+      return;
+    }
+    uiOverlayTimer =
         new AnimationTimer() {
           @Override
           public void handle(long now) {
-            updateSeedPickerPosition();
+            if (seedPickerController != null) {
+              updateSeedPickerPosition();
+            }
+            if (inventoryController != null) {
+              positionInventoryPanel();
+            }
           }
         };
-    seedPickerPositionTimer.start();
+    uiOverlayTimer.start();
   }
 
-  private void stopSeedPickerTracking() {
-    if (seedPickerPositionTimer != null) {
-      seedPickerPositionTimer.stop();
-      seedPickerPositionTimer = null;
+  private void stopUiOverlayTimerIfIdle() {
+    if (seedPickerOverlay == null && inventoryOverlay == null && uiOverlayTimer != null) {
+      uiOverlayTimer.stop();
+      uiOverlayTimer = null;
     }
   }
 
@@ -285,12 +285,14 @@ public class GameScene {
 
     inventoryOverlay = overlay;
     stack.getChildren().add(overlay);
+    startUiOverlayTimer();
     positionInventoryPanel();
   }
 
   private void onInventoryClosed() {
     inventoryOverlay = null;
     inventoryController = null;
+    stopUiOverlayTimerIfIdle();
   }
 
   private void closeInventory() {
@@ -365,6 +367,10 @@ public class GameScene {
   public void stop() {
     closeSeedPicker();
     closeInventory();
+    if (uiOverlayTimer != null) {
+      uiOverlayTimer.stop();
+      uiOverlayTimer = null;
+    }
     if (gameLoop != null) {
       gameLoop.stop();
       System.out.println("Game loop stopped");
@@ -484,10 +490,6 @@ public class GameScene {
     gc.fillText("WASD move · bed: plant/harvest · I inventory · G grow (debug)", 10, 40);
     int total = viewModel.getPlayerInventory().getTotalCount();
     gc.fillText("Inventory: " + total + (total == 1 ? " item" : " items"), 10, 58);
-
-    if (inventoryController != null) {
-      positionInventoryPanel();
-    }
 
     if (harvestMessageTicks > 0) {
       String msg = viewModel.getLastHarvestMessage();

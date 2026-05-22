@@ -1,35 +1,60 @@
 package ua.notion.presentation.controller;
 
-import java.io.IOException;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import ua.notion.domain.entity.User;
+import ua.notion.domain.service.auth.AuthenticationService;
+import ua.notion.infrastructure.config.PersistenceModule;
+import ua.notion.infrastructure.config.ServiceModule;
+import ua.notion.presentation.controller.auth.LoginController;
+import ua.notion.presentation.ui.SceneCoordinator;
 
 public class MenuController {
 
+  @FXML private StackPane menuRoot;
+  @FXML private ImageView menuBackground;
   @FXML private Label welcomeLabel;
-
   @FXML private Button playButton;
-
   @FXML private Button gardenButton;
-
   @FXML private Button shopButton;
-
   @FXML private Button achievementsButton;
-
   @FXML private Button tasksButton;
-
   @FXML private Button settingsButton;
-
   @FXML private Button logoutButton;
 
   private User currentUser;
+  private SceneCoordinator sceneCoordinator;
+
+  @FXML
+  private void initialize() {
+    Image bg =
+        new Image(
+            getClass().getResourceAsStream("/assets/UIKIT/Assets/Backgound/Background_Green.png"));
+    menuBackground.setImage(bg);
+    menuBackground.fitWidthProperty().bind(menuRoot.widthProperty());
+    menuBackground.fitHeightProperty().bind(menuRoot.heightProperty());
+
+    menuRoot
+        .sceneProperty()
+        .addListener(
+            (obs, oldScene, newScene) -> {
+              if (newScene != null) {
+                sceneCoordinator = SceneCoordinator.of((Stage) newScene.getWindow());
+              }
+            });
+    if (menuRoot.getScene() != null) {
+      sceneCoordinator = SceneCoordinator.of((Stage) menuRoot.getScene().getWindow());
+    }
+  }
 
   public void setCurrentUser(User user) {
     this.currentUser = user;
@@ -38,196 +63,137 @@ public class MenuController {
     }
   }
 
+  private SceneCoordinator coordinator() {
+    if (sceneCoordinator != null) {
+      return sceneCoordinator;
+    }
+    return SceneCoordinator.forNode(menuRoot != null ? menuRoot : playButton);
+  }
+
+  private Injector createInjector() {
+    return Guice.createInjector(new PersistenceModule(), new ServiceModule());
+  }
+
   @FXML
   private void handlePlay() {
     try {
-      FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/game.fxml"));
-      Parent root = loader.load();
-
-      Stage stage = (Stage) playButton.getScene().getWindow();
-      Scene scene = new Scene(root, 1024, 768);
-      stage.setScene(scene);
-      stage.setTitle("Garden Simulator - Game");
-      stage.setMinWidth(1024);
-      stage.setMinHeight(768);
-      stage.setMaxWidth(1920);
-      stage.setMaxHeight(1080);
-    } catch (IOException e) {
-      showError("Error", "Failed to start game: " + e.getMessage());
+      coordinator().loadContent("/fxml/game.fxml");
+      coordinator().getStage().setTitle("Garden Simulator - Game");
+    } catch (Exception e) {
+      coordinator().showMessageOverlay("Error", "Failed to start game: " + e.getMessage(), false);
       e.printStackTrace();
     }
   }
 
   @FXML
   private void handleGarden() {
-    try {
-      com.google.inject.Injector injector =
-          com.google.inject.Guice.createInjector(
-              new ua.notion.infrastructure.config.PersistenceModule(),
-              new ua.notion.infrastructure.config.ServiceModule());
-
-      FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/gardens.fxml"));
-
-      ua.notion.presentation.viewmodel.GardenManagementViewModel viewModel =
-          injector.getInstance(ua.notion.presentation.viewmodel.GardenManagementViewModel.class);
-      ua.notion.presentation.controller.GardenManagementController controller =
-          new ua.notion.presentation.controller.GardenManagementController(viewModel);
-
-      loader.setController(controller);
-      Parent root = loader.load();
-
-      controller.setCurrentUser(currentUser);
-
-      Stage stage = (Stage) gardenButton.getScene().getWindow();
-      Scene scene = new Scene(root, 800, 600);
-      stage.setScene(scene);
-      stage.setTitle("Garden Simulator - My Gardens");
-    } catch (IOException e) {
-      showError("Error", "Failed to open gardens: " + e.getMessage());
-      e.printStackTrace();
-    }
+    navigateWithInjector(
+        "/fxml/gardens.fxml",
+        "Garden Simulator - My Gardens",
+        (loader, injector) -> {
+          var viewModel =
+              injector.getInstance(
+                  ua.notion.presentation.viewmodel.GardenManagementViewModel.class);
+          var controller = new GardenManagementController(viewModel);
+          loader.setController(controller);
+          return controller;
+        });
   }
 
   @FXML
   private void handleShop() {
-    try {
-      com.google.inject.Injector injector =
-          com.google.inject.Guice.createInjector(
-              new ua.notion.infrastructure.config.PersistenceModule(),
-              new ua.notion.infrastructure.config.ServiceModule());
-
-      FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/plants.fxml"));
-
-      ua.notion.presentation.viewmodel.PlantCatalogViewModel viewModel =
-          injector.getInstance(ua.notion.presentation.viewmodel.PlantCatalogViewModel.class);
-      ua.notion.presentation.controller.PlantCatalogController controller =
-          new ua.notion.presentation.controller.PlantCatalogController(viewModel);
-
-      loader.setController(controller);
-      Parent root = loader.load();
-
-      controller.setCurrentUser(currentUser);
-
-      Stage stage = (Stage) shopButton.getScene().getWindow();
-      Scene scene = new Scene(root, 800, 600);
-      stage.setScene(scene);
-      stage.setTitle("Garden Simulator - Plant Catalog");
-    } catch (IOException e) {
-      showError("Error", "Failed to open plant catalog: " + e.getMessage());
-      e.printStackTrace();
-    }
+    navigateWithInjector(
+        "/fxml/plants.fxml",
+        "Garden Simulator - Plant Catalog",
+        (loader, injector) -> {
+          var viewModel =
+              injector.getInstance(ua.notion.presentation.viewmodel.PlantCatalogViewModel.class);
+          var controller = new PlantCatalogController(viewModel);
+          loader.setController(controller);
+          return controller;
+        });
   }
 
   @FXML
   private void handleAchievements() {
-    try {
-      com.google.inject.Injector injector =
-          com.google.inject.Guice.createInjector(
-              new ua.notion.infrastructure.config.PersistenceModule(),
-              new ua.notion.infrastructure.config.ServiceModule());
-
-      FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/achievements.fxml"));
-
-      ua.notion.presentation.viewmodel.AchievementViewModel viewModel =
-          injector.getInstance(ua.notion.presentation.viewmodel.AchievementViewModel.class);
-      ua.notion.presentation.controller.AchievementController controller =
-          new ua.notion.presentation.controller.AchievementController(viewModel);
-
-      loader.setController(controller);
-      Parent root = loader.load();
-
-      controller.setCurrentUser(currentUser);
-
-      Stage stage = (Stage) achievementsButton.getScene().getWindow();
-      Scene scene = new Scene(root, 800, 600);
-      stage.setScene(scene);
-      stage.setTitle("Garden Simulator - Achievements");
-    } catch (IOException e) {
-      showError("Error", "Failed to open achievements: " + e.getMessage());
-      e.printStackTrace();
-    }
+    navigateWithInjector(
+        "/fxml/achievements.fxml",
+        "Garden Simulator - Achievements",
+        (loader, injector) -> {
+          var viewModel =
+              injector.getInstance(ua.notion.presentation.viewmodel.AchievementViewModel.class);
+          var controller = new AchievementController(viewModel);
+          loader.setController(controller);
+          return controller;
+        });
   }
 
   @FXML
   private void handleTasks() {
-    try {
-      com.google.inject.Injector injector =
-          com.google.inject.Guice.createInjector(
-              new ua.notion.infrastructure.config.PersistenceModule(),
-              new ua.notion.infrastructure.config.ServiceModule());
-
-      FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/tasks.fxml"));
-
-      ua.notion.presentation.viewmodel.TaskManagementViewModel viewModel =
-          injector.getInstance(ua.notion.presentation.viewmodel.TaskManagementViewModel.class);
-      ua.notion.presentation.controller.TaskManagementController controller =
-          new ua.notion.presentation.controller.TaskManagementController(viewModel);
-
-      loader.setController(controller);
-      Parent root = loader.load();
-
-      controller.setCurrentUser(currentUser);
-
-      Stage stage = (Stage) tasksButton.getScene().getWindow();
-      Scene scene = new Scene(root, 800, 600);
-      stage.setScene(scene);
-      stage.setTitle("Garden Simulator - Tasks");
-    } catch (IOException e) {
-      showError("Error", "Failed to open tasks: " + e.getMessage());
-      e.printStackTrace();
-    }
+    navigateWithInjector(
+        "/fxml/tasks.fxml",
+        "Garden Simulator - Tasks",
+        (loader, injector) -> {
+          var viewModel =
+              injector.getInstance(ua.notion.presentation.viewmodel.TaskManagementViewModel.class);
+          var controller = new TaskManagementController(viewModel);
+          loader.setController(controller);
+          return controller;
+        });
   }
 
   @FXML
   private void handleSettings() {
-    showInfo("Settings", "Opening settings...");
+    coordinator().showSettingsOverlay();
   }
 
   @FXML
   private void handleLogout() {
     try {
-      // Get injector to create proper controller with dependencies
-      com.google.inject.Injector injector =
-          com.google.inject.Guice.createInjector(
-              new ua.notion.infrastructure.config.PersistenceModule(),
-              new ua.notion.infrastructure.config.ServiceModule());
-
+      coordinator().hideOverlay();
+      Injector injector = createInjector();
       FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
-
-      ua.notion.domain.service.auth.AuthenticationService authService =
-          injector.getInstance(ua.notion.domain.service.auth.AuthenticationService.class);
-      ua.notion.presentation.controller.auth.LoginController loginController =
-          new ua.notion.presentation.controller.auth.LoginController(authService);
-
-      Stage stage = (Stage) logoutButton.getScene().getWindow();
-      loginController.setStage(stage);
-
+      AuthenticationService authService = injector.getInstance(AuthenticationService.class);
+      LoginController loginController = new LoginController(authService);
       loader.setController(loginController);
       Parent root = loader.load();
-
-      Scene scene = new Scene(root, 800, 700);
-      scene.getStylesheets().add(getClass().getResource("/css/auth.css").toExternalForm());
-      stage.setScene(scene);
-      stage.setTitle("Garden Simulator - Login");
-    } catch (IOException e) {
-      showError("Error", "Failed to return to login screen: " + e.getMessage());
+      coordinator().setContent(root);
+      coordinator().addStylesheet("/css/auth.css");
+      coordinator().getStage().setTitle("Garden Simulator - Login");
+    } catch (Exception e) {
+      coordinator().showMessageOverlay("Error", "Failed to logout: " + e.getMessage(), false);
       e.printStackTrace();
     }
   }
 
-  private void showInfo(String title, String message) {
-    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-    alert.setTitle(title);
-    alert.setHeaderText(null);
-    alert.setContentText(message);
-    alert.showAndWait();
+  private void navigateWithInjector(String fxml, String title, ControllerFactory factory) {
+    SceneCoordinator nav = coordinator();
+    try {
+      nav.hideOverlay();
+      Injector injector = createInjector();
+      FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
+      Object controller = factory.create(loader, injector);
+      Parent root = loader.load();
+      if (controller instanceof GardenManagementController g) {
+        g.setCurrentUser(currentUser);
+      } else if (controller instanceof PlantCatalogController p) {
+        p.setCurrentUser(currentUser);
+      } else if (controller instanceof AchievementController a) {
+        a.setCurrentUser(currentUser);
+      } else if (controller instanceof TaskManagementController t) {
+        t.setCurrentUser(currentUser);
+      }
+      nav.setContent(root);
+      nav.addStylesheet("/css/menu.css");
+      nav.getStage().setTitle(title);
+    } catch (Exception e) {
+      nav.showMessageOverlay("Error", e.getMessage(), false);
+      e.printStackTrace();
+    }
   }
 
-  private void showError(String title, String message) {
-    Alert alert = new Alert(Alert.AlertType.ERROR);
-    alert.setTitle(title);
-    alert.setHeaderText(null);
-    alert.setContentText(message);
-    alert.showAndWait();
+  @FunctionalInterface
+  private interface ControllerFactory {
+    Object create(FXMLLoader loader, Injector injector);
   }
 }

@@ -9,169 +9,120 @@
 <?import javafx.scene.text.Font?>
 
 <StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:id="menuRoot"
            fx:controller="ua.notion.presentation.controller.MenuController"
+           styleClass="screen-root"
+           alignment="CENTER"
            stylesheets="@../css/menu.css">
 
-    <!-- Background - responsive -->
-    <ImageView preserveRatio="false" pickOnBounds="true">
-        <Image url="@../assets/UIKIT/Assets/Backgound/Background_Green.png"/>
-        <fitWidth>
-            <StackPane fx:constant="USE_COMPUTED_SIZE"/>
-        </fitWidth>
-        <fitHeight>
-            <StackPane fx:constant="USE_COMPUTED_SIZE"/>
-        </fitHeight>
-    </ImageView>
+    <ImageView fx:id="menuBackground" pickOnBounds="true" preserveRatio="false"
+               styleClass="menu-bg" StackPane.alignment="CENTER"/>
 
-    <!-- Main Content -->
-    <VBox alignment="CENTER" spacing="30" VBox.vgrow="ALWAYS">
+    <VBox alignment="CENTER" spacing="24" styleClass="menu-content" maxWidth="720"
+          StackPane.alignment="CENTER">
         <padding>
-            <Insets top="50" bottom="50" left="50" right="50"/>
+            <Insets top="32" bottom="32" left="24" right="24"/>
         </padding>
 
-        <!-- Title -->
         <Label text="Garden Simulator" styleClass="title-label">
             <font>
-                <Font name="System Bold" size="48"/>
+                <Font name="System Bold" size="42"/>
             </font>
         </Label>
 
-        <!-- Welcome Message -->
         <Label fx:id="welcomeLabel" text="Welcome, Player!" styleClass="welcome-label">
             <font>
-                <Font size="24"/>
+                <Font size="22"/>
             </font>
         </Label>
 
-        <!-- Menu Buttons Grid - responsive -->
-        <GridPane alignment="CENTER" hgap="30" vgap="30" maxWidth="600">
-            <padding>
-                <Insets top="30"/>
-            </padding>
-
+        <GridPane styleClass="menu-grid" alignment="CENTER" hgap="20" vgap="20" maxWidth="640">
             <columnConstraints>
-                <ColumnConstraints percentWidth="33.33" halignment="CENTER"/>
-                <ColumnConstraints percentWidth="33.33" halignment="CENTER"/>
-                <ColumnConstraints percentWidth="33.33" halignment="CENTER"/>
+                <ColumnConstraints percentWidth="33.33" hgrow="ALWAYS" halignment="CENTER"/>
+                <ColumnConstraints percentWidth="33.33" hgrow="ALWAYS" halignment="CENTER"/>
+                <ColumnConstraints percentWidth="33.34" hgrow="ALWAYS" halignment="CENTER"/>
             </columnConstraints>
-
             <rowConstraints>
                 <RowConstraints valignment="CENTER"/>
                 <RowConstraints valignment="CENTER"/>
             </rowConstraints>
 
-            <!-- Row 1 -->
-            <VBox alignment="CENTER" spacing="10" GridPane.columnIndex="0" GridPane.rowIndex="0">
+            <VBox alignment="CENTER" spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="0">
                 <Button fx:id="playButton" onAction="#handlePlay" styleClass="menu-button">
                     <graphic>
-                        <ImageView fitWidth="80" fitHeight="80" preserveRatio="true">
+                        <ImageView fitWidth="72" fitHeight="72" preserveRatio="true">
                             <Image url="@../assets/UIKIT/Assets/Menu Buttons/Grass Menu Buttons/Grass-Buttons-play.png"/>
                         </ImageView>
                     </graphic>
                 </Button>
-                <Label text="Play" styleClass="button-label">
-                    <font>
-                        <Font size="18"/>
-                    </font>
-                </Label>
+                <Label text="Play" styleClass="button-label"/>
             </VBox>
 
-            <VBox alignment="CENTER" spacing="10" GridPane.columnIndex="1" GridPane.rowIndex="0">
+            <VBox alignment="CENTER" spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="0">
                 <Button fx:id="gardenButton" onAction="#handleGarden" styleClass="menu-button">
                     <graphic>
-                        <ImageView fitWidth="80" fitHeight="80" preserveRatio="true">
+                        <ImageView fitWidth="72" fitHeight="72" preserveRatio="true">
                             <Image url="@../assets/UIKIT/Assets/Menu Buttons/Grass Menu Buttons/Grass-Buttons-house.png"/>
                         </ImageView>
                     </graphic>
                 </Button>
-                <Label text="My Garden" styleClass="button-label">
-                    <font>
-                        <Font size="18"/>
-                    </font>
-                </Label>
+                <Label text="My Garden" styleClass="button-label"/>
             </VBox>
 
-            <VBox alignment="CENTER" spacing="10" GridPane.columnIndex="2" GridPane.rowIndex="0">
+            <VBox alignment="CENTER" spacing="8" GridPane.columnIndex="2" GridPane.rowIndex="0">
                 <Button fx:id="shopButton" onAction="#handleShop" styleClass="menu-button">
                     <graphic>
-                        <ImageView fitWidth="80" fitHeight="80" preserveRatio="true">
+                        <ImageView fitWidth="72" fitHeight="72" preserveRatio="true">
                             <Image url="@../assets/UIKIT/Assets/Menu Buttons/Grass Menu Buttons/Grass-Buttons-shoping-cart.png"/>
                         </ImageView>
                     </graphic>
                 </Button>
-                <Label text="Shop" styleClass="button-label">
-                    <font>
-                        <Font size="18"/>
-                    </font>
-                </Label>
+                <Label text="Shop" styleClass="button-label"/>
             </VBox>
 
-            <!-- Row 2 -->
-            <VBox alignment="CENTER" spacing="10" GridPane.columnIndex="0" GridPane.rowIndex="1">
+            <VBox alignment="CENTER" spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="1">
                 <Button fx:id="achievementsButton" onAction="#handleAchievements" styleClass="menu-button">
                     <graphic>
-                        <ImageView fitWidth="80" fitHeight="80" preserveRatio="true">
+                        <ImageView fitWidth="72" fitHeight="72" preserveRatio="true">
                             <Image url="@../assets/UIKIT/Assets/Menu Buttons/Grass Menu Buttons/Grass-Buttons-trophy.png"/>
                         </ImageView>
                     </graphic>
                 </Button>
-                <Label text="Achievements" styleClass="button-label">
-                    <font>
-                        <Font size="18"/>
-                    </font>
-                </Label>
+                <Label text="Achievements" styleClass="button-label"/>
             </VBox>
 
-            <VBox alignment="CENTER" spacing="10" GridPane.columnIndex="1" GridPane.rowIndex="1">
+            <VBox alignment="CENTER" spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="1">
                 <Button fx:id="tasksButton" onAction="#handleTasks" styleClass="menu-button">
                     <graphic>
-                        <ImageView fitWidth="80" fitHeight="80" preserveRatio="true">
+                        <ImageView fitWidth="72" fitHeight="72" preserveRatio="true">
                             <Image url="@../assets/UIKIT/Assets/Menu Buttons/Grass Menu Buttons/Grass-Buttons-note.png"/>
                         </ImageView>
                     </graphic>
                 </Button>
-                <Label text="Tasks" styleClass="button-label">
-                    <font>
-                        <Font size="18"/>
-                    </font>
-                </Label>
+                <Label text="Tasks" styleClass="button-label"/>
             </VBox>
 
-            <VBox alignment="CENTER" spacing="10" GridPane.columnIndex="2" GridPane.rowIndex="1">
+            <VBox alignment="CENTER" spacing="8" GridPane.columnIndex="2" GridPane.rowIndex="1">
                 <Button fx:id="settingsButton" onAction="#handleSettings" styleClass="menu-button">
                     <graphic>
-                        <ImageView fitWidth="80" fitHeight="80" preserveRatio="true">
+                        <ImageView fitWidth="72" fitHeight="72" preserveRatio="true">
                             <Image url="@../assets/UIKIT/Assets/Menu Buttons/Grass Menu Buttons/Grass-Buttons-setting.png"/>
                         </ImageView>
                     </graphic>
                 </Button>
-                <Label text="Settings" styleClass="button-label">
-                    <font>
-                        <Font size="18"/>
-                    </font>
-                </Label>
+                <Label text="Settings" styleClass="button-label"/>
             </VBox>
         </GridPane>
 
-        <!-- Logout Button -->
-        <HBox alignment="CENTER" spacing="10">
-            <padding>
-                <Insets top="20"/>
-            </padding>
-            <Button fx:id="logoutButton" onAction="#handleLogout" styleClass="logout-button">
-                <graphic>
-                    <HBox alignment="CENTER" spacing="10">
-                        <ImageView fitWidth="40" fitHeight="40" preserveRatio="true">
-                            <Image url="@../assets/UIKIT/Assets/Menu Buttons/Clear Menu Buttons/Buttons-return.png"/>
-                        </ImageView>
-                        <Label text="Logout" style="-fx-text-fill: white;">
-                            <font>
-                                <Font size="16"/>
-                            </font>
-                        </Label>
-                    </HBox>
-                </graphic>
-            </Button>
-        </HBox>
+        <Button fx:id="logoutButton" onAction="#handleLogout" styleClass="logout-button">
+            <graphic>
+                <HBox alignment="CENTER" spacing="10">
+                    <ImageView fitWidth="36" fitHeight="36" preserveRatio="true">
+                        <Image url="@../assets/UIKIT/Assets/Menu Buttons/Clear Menu Buttons/Buttons-return.png"/>
+                    </ImageView>
+                    <Label text="Logout" style="-fx-text-fill: white;"/>
+                </HBox>
+            </graphic>
+        </Button>
     </VBox>
 </StackPane>

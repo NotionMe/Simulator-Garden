@@ -1,0 +1,84 @@
+/* App shell — overlays & responsive helpers */
+
+.overlay-wrapper {
+    -fx-alignment: center;
+}
+
+.overlay-backdrop {
+    -fx-background-color: rgba(0, 0, 0, 0.45);
+}
+
+.overlay-panel-center {
+    -fx-alignment: center;
+    -fx-padding: 24;
+}
+
+.overlay-panel-auth {
+    -fx-alignment: center;
+    -fx-padding: 20;
+    -fx-min-width: 340;
+    -fx-max-width: 560;
+    -fx-pref-width: 480;
+}
+
+.overlay-card-info,
+.overlay-card-success {
+    -fx-background-color: rgba(255, 255, 255, 0.98);
+    -fx-background-radius: 16;
+    -fx-border-color: #81c784;
+    -fx-border-width: 2;
+    -fx-border-radius: 16;
+    -fx-padding: 24;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 24, 0.2, 0, 8);
+}
+
+.overlay-card-success {
+    -fx-border-color: #66bb6a;
+}
+
+.overlay-card-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2e7d32;
+}
+
+.overlay-card-message {
+    -fx-font-size: 14px;
+    -fx-text-fill: #33691e;
+    -fx-text-alignment: center;
+}
+
+.overlay-primary-button {
+    -fx-background-color: linear-gradient(to bottom, #66bb6a, #4caf50);
+    -fx-text-fill: white;
+    -fx-background-radius: 10;
+    -fx-padding: 8 24;
+    -fx-cursor: hand;
+}
+
+.screen-root {
+    -fx-background-color: transparent;
+    -fx-alignment: center;
+}
+
+.game-root {
+    -fx-background-color: black;
+    -fx-alignment: center;
+}
+
+.game-container {
+    -fx-background-color: black;
+    -fx-alignment: center;
+}
+
+.menu-bg {
+    -fx-opacity: 1;
+}
+
+.menu-content {
+    -fx-alignment: center;
+}
+
+.menu-grid {
+    -fx-alignment: center;
+}

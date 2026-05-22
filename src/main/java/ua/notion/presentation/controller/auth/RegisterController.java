@@ -1,20 +1,21 @@
 package ua.notion.presentation.controller.auth;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.stage.Stage;
 import ua.notion.domain.entity.User;
 import ua.notion.domain.service.auth.AuthenticationService;
+import ua.notion.presentation.controller.MenuController;
+import ua.notion.presentation.ui.SceneCoordinator;
 import ua.notion.presentation.viewmodel.RegisterViewModel;
 
 public class RegisterController {
   private final RegisterViewModel viewModel;
-  private Stage stage;
-  private Runnable onRegisterSuccess;
+  private final AuthenticationService authService;
 
   @FXML private TextField usernameField;
   @FXML private TextField emailField;
@@ -25,20 +26,12 @@ public class RegisterController {
   @FXML private Button backToLoginButton;
 
   public RegisterController(AuthenticationService authService) {
+    this.authService = authService;
     this.viewModel = new RegisterViewModel(authService);
-  }
-
-  public void setStage(Stage stage) {
-    this.stage = stage;
-  }
-
-  public void setOnRegisterSuccess(Runnable callback) {
-    this.onRegisterSuccess = callback;
   }
 
   @FXML
   public void initialize() {
-    // Bind view to viewmodel
     usernameField.textProperty().bindBidirectional(viewModel.usernameProperty());
     emailField.textProperty().bindBidirectional(viewModel.emailProperty());
     passwordField.textProperty().bindBidirectional(viewModel.passwordProperty());
@@ -53,36 +46,31 @@ public class RegisterController {
     confirmPasswordField.setOnAction(event -> handleRegister());
   }
 
+  private SceneCoordinator coordinator() {
+    return SceneCoordinator.forNode(registerButton);
+  }
+
   private void handleRegister() {
     try {
       User user = viewModel.register();
-      showSuccess(
-          "Account created successfully!\n\nWelcome to Garden Simulator, "
-              + user.getUsername()
-              + "!");
+      coordinator().hideOverlay();
       openMenuScreen(user);
     } catch (IllegalArgumentException e) {
-      // Error already set in viewModel
+      // validation message in viewModel
     } catch (Exception e) {
-      // Error already set in viewModel
+      // error in viewModel
     }
   }
 
   private void openMenuScreen(User user) {
     try {
-      javafx.fxml.FXMLLoader loader =
-          new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/menu.fxml"));
-      javafx.scene.Parent root = loader.load();
-
-      ua.notion.presentation.controller.MenuController menuController = loader.getController();
+      FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/menu.fxml"));
+      Parent root = loader.load();
+      MenuController menuController = loader.getController();
       menuController.setCurrentUser(user);
-
-      stage.getScene().setRoot(root);
-      stage.setTitle("Garden Simulator - Main Menu");
-      stage.setMinWidth(800);
-      stage.setMinHeight(600);
-      stage.setMaxWidth(1920);
-      stage.setMaxHeight(1080);
+      coordinator().setContent(root);
+      coordinator().addStylesheet("/css/menu.css");
+      coordinator().getStage().setTitle("Garden Simulator - Main Menu");
     } catch (Exception e) {
       viewModel.errorMessageProperty().set("Failed to open menu: " + e.getMessage());
       viewModel.hasErrorProperty().set(true);
@@ -90,17 +78,18 @@ public class RegisterController {
   }
 
   private void handleBackToLogin() {
-    if (onRegisterSuccess != null) {
-      onRegisterSuccess.run();
+    try {
+      FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
+      LoginController loginController = new LoginController(authService);
+      loader.setController(loginController);
+      Parent root = loader.load();
+      coordinator().hideOverlay();
+      coordinator().setContent(root);
+      coordinator().addStylesheet("/css/auth.css");
+      coordinator().getStage().setTitle("Garden Simulator");
+    } catch (Exception e) {
+      viewModel.errorMessageProperty().set("Failed to return to login: " + e.getMessage());
+      viewModel.hasErrorProperty().set(true);
     }
-  }
-
-  private void showSuccess(String message) {
-    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-    alert.setTitle("Success");
-    alert.setHeaderText("Welcome to Garden Simulator!");
-    alert.setContentText(message);
-    alert.getDialogPane().getStyleClass().add("dialog-pane");
-    alert.showAndWait();
   }
 }

@@ -7,18 +7,16 @@
 <?import javafx.scene.shape.*?>
 
 <StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-           styleClass="root-container">
+           styleClass="root-container screen-root" alignment="CENTER">
 
-    <!-- Background decorative elements -->
-    <VBox styleClass="background-decoration" StackPane.alignment="TOP_LEFT"/>
+    <Region styleClass="background-decoration" maxWidth="Infinity" maxHeight="Infinity"
+            StackPane.alignment="CENTER"/>
 
-    <!-- Main content -->
-    <VBox alignment="CENTER" spacing="0" maxWidth="480" styleClass="main-content">
+    <VBox alignment="CENTER" spacing="0" styleClass="main-content" maxWidth="520" fillWidth="true">
         <padding>
-            <Insets top="40" right="60" bottom="40" left="60"/>
+            <Insets top="32" right="32" bottom="32" left="32"/>
         </padding>
 
-        <!-- Logo/Icon area with decorative circle -->
         <StackPane styleClass="logo-container" prefHeight="100" prefWidth="100">
             <Circle radius="50" styleClass="logo-circle"/>
             <Label text="🌱" styleClass="logo-icon">
@@ -28,113 +26,68 @@
             </Label>
         </StackPane>
 
-        <Region prefHeight="24"/>
+        <Region prefHeight="20"/>
 
-        <!-- Title -->
-        <Label text="Join Garden Simulator" styleClass="main-title">
-            <font>
-                <Font name="Georgia Bold" size="32"/>
-            </font>
-        </Label>
+        <Label text="Join Garden Simulator" styleClass="main-title" wrapText="true"
+               textAlignment="CENTER" maxWidth="Infinity"/>
 
         <Region prefHeight="8"/>
 
-        <Label text="Create your account and start growing" styleClass="subtitle">
-            <font>
-                <Font name="Georgia" size="14"/>
-            </font>
-        </Label>
+        <Label text="Create your account and start growing" styleClass="subtitle" wrapText="true"
+               textAlignment="CENTER" maxWidth="Infinity"/>
 
-        <Region prefHeight="32"/>
+        <Region prefHeight="24"/>
 
-        <!-- Registration Form Card -->
-        <VBox spacing="20" styleClass="form-card">
+        <VBox spacing="20" styleClass="form-card" maxWidth="Infinity" minWidth="300">
             <padding>
-                <Insets top="32" right="32" bottom="32" left="32"/>
+                <Insets top="28" right="28" bottom="28" left="28"/>
             </padding>
 
-            <VBox spacing="6">
-                <Label text="Username" styleClass="field-label">
-                    <font>
-                        <Font name="System Bold" size="12"/>
-                    </font>
-                </Label>
+            <VBox spacing="8">
+                <Label text="Username" styleClass="field-label"/>
                 <TextField fx:id="usernameField" promptText="Choose a username"
-                           styleClass="custom-text-field" prefHeight="44"/>
+                           styleClass="custom-text-field" prefHeight="44" maxWidth="Infinity"/>
             </VBox>
 
-            <VBox spacing="6">
-                <Label text="Email" styleClass="field-label">
-                    <font>
-                        <Font name="System Bold" size="12"/>
-                    </font>
-                </Label>
+            <VBox spacing="8">
+                <Label text="Email" styleClass="field-label"/>
                 <TextField fx:id="emailField" promptText="your.email@example.com"
-                           styleClass="custom-text-field" prefHeight="44"/>
+                           styleClass="custom-text-field" prefHeight="44" maxWidth="Infinity"/>
             </VBox>
 
-            <VBox spacing="6">
-                <Label text="Password" styleClass="field-label">
-                    <font>
-                        <Font name="System Bold" size="12"/>
-                    </font>
-                </Label>
+            <VBox spacing="8">
+                <Label text="Password" styleClass="field-label"/>
                 <PasswordField fx:id="passwordField" promptText="Create a password"
-                               styleClass="custom-text-field" prefHeight="44"/>
+                               styleClass="custom-text-field" prefHeight="44" maxWidth="Infinity"/>
             </VBox>
 
-            <VBox spacing="6">
-                <Label text="Confirm Password" styleClass="field-label">
-                    <font>
-                        <Font name="System Bold" size="12"/>
-                    </font>
-                </Label>
+            <VBox spacing="8">
+                <Label text="Confirm Password" styleClass="field-label"/>
                 <PasswordField fx:id="confirmPasswordField" promptText="Confirm your password"
-                               styleClass="custom-text-field" prefHeight="44"/>
+                               styleClass="custom-text-field" prefHeight="44" maxWidth="Infinity"/>
             </VBox>
 
-            <VBox spacing="4" style="-fx-padding: 8 0 0 0;">
-                <Label text="Requirements:" style="-fx-font-weight: bold; -fx-font-size: 10px; -fx-text-fill: #558b2f;"/>
-                <Label text="• Username: 3-50 characters, alphanumeric + underscore" style="-fx-font-size: 9px; -fx-text-fill: #7cb342;"/>
-                <Label text="• Password: minimum 8 characters" style="-fx-font-size: 9px; -fx-text-fill: #7cb342;"/>
-                <Label text="• Valid email format" style="-fx-font-size: 9px; -fx-text-fill: #7cb342;"/>
+            <VBox spacing="4">
+                <Label text="Requirements:" styleClass="requirements-title"/>
+                <Label text="• Username: 3–50 characters (letters, numbers, _)" styleClass="requirements-item" wrapText="true"/>
+                <Label text="• Password: at least 8 characters" styleClass="requirements-item" wrapText="true"/>
+                <Label text="• Valid email format" styleClass="requirements-item" wrapText="true"/>
             </VBox>
 
             <Label fx:id="errorLabel" text="Error message" styleClass="error-label"
-                   visible="false" wrapText="true"/>
-
-            <Region prefHeight="4"/>
+                   visible="false" wrapText="true" maxWidth="Infinity"/>
 
             <Button fx:id="registerButton" text="Create Account" styleClass="primary-button"
-                    prefHeight="48">
-                <font>
-                    <Font name="System Bold" size="14"/>
-                </font>
-            </Button>
+                    prefHeight="48" maxWidth="Infinity"/>
 
             <Separator styleClass="form-separator"/>
 
-            <HBox spacing="8" alignment="CENTER" styleClass="register-prompt">
-                <Label text="Already have an account?" styleClass="prompt-text">
-                    <font>
-                        <Font size="12"/>
-                    </font>
-                </Label>
-                <Button fx:id="backToLoginButton" text="Sign In" styleClass="link-button">
-                    <font>
-                        <Font name="System Bold" size="12"/>
-                    </font>
-                </Button>
-            </HBox>
+            <VBox spacing="10" alignment="CENTER" styleClass="register-prompt" maxWidth="Infinity">
+                <Label text="Already have an account?" styleClass="prompt-text" wrapText="true"
+                       textAlignment="CENTER" maxWidth="Infinity"/>
+                <Button fx:id="backToLoginButton" text="Back to Sign In" styleClass="secondary-button"
+                        maxWidth="Infinity" prefHeight="44" minHeight="44"/>
+            </VBox>
         </VBox>
-
-        <Region prefHeight="20"/>
-
-        <!-- Footer -->
-        <Label text="© 2026 Garden Simulator" styleClass="footer-text">
-            <font>
-                <Font size="11"/>
-            </font>
-        </Label>
     </VBox>
 </StackPane>

@@ -3,10 +3,17 @@
 
 .root-container {
     -fx-background-color: linear-gradient(to bottom right, #e8f5e9, #f1f8e9, #fff8e1);
+    -fx-alignment: center;
 }
 
 .background-decoration {
-    -fx-background-color: #e8f5e9;
+    -fx-background-color: linear-gradient(to bottom right, #e8f5e9, #f1f8e9, #fff8e1);
+    -fx-min-width: 0;
+    -fx-min-height: 0;
+    -fx-pref-width: -1;
+    -fx-pref-height: -1;
+    -fx-max-width: infinity;
+    -fx-max-height: infinity;
 }
 
 .main-content {
@@ -33,12 +40,30 @@
 .main-title {
     -fx-text-fill: #2e7d32;
     -fx-effect: dropshadow(gaussian, #2e7d321a, 2, 0, 0, 1);
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-wrap-text: true;
+    -fx-text-alignment: center;
+}
+
+.requirements-title {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #558b2f;
+}
+
+.requirements-item {
+    -fx-font-size: 10px;
+    -fx-text-fill: #7cb342;
+    -fx-wrap-text: true;
 }
 
 .subtitle {
     -fx-text-fill: #558b2f;
     -fx-opacity: 0.85;
     -fx-font-style: italic;
+    -fx-wrap-text: true;
+    -fx-text-alignment: center;
 }
 
 /* Form Card */
@@ -49,6 +74,7 @@
     -fx-border-color: #81c78450;
     -fx-border-width: 1;
     -fx-border-radius: 24;
+    -fx-fill-width: true;
 }
 
 /* Form Fields */
@@ -122,11 +148,33 @@
 .register-prompt {
     -fx-background-color: #e8f5e980;
     -fx-background-radius: 10;
-    -fx-padding: 12 16;
+    -fx-padding: 14 16;
+    -fx-alignment: center;
+    -fx-fill-width: true;
 }
 
 .prompt-text {
     -fx-text-fill: #558b2f;
+    -fx-text-alignment: center;
+    -fx-wrap-text: true;
+}
+
+.secondary-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #388e3c;
+    -fx-border-color: #66bb6a;
+    -fx-border-width: 2;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 10 20;
+}
+
+.secondary-button:hover {
+    -fx-background-color: #e8f5e9;
+    -fx-border-color: #43a047;
 }
 
 .link-button {
@@ -134,8 +182,9 @@
     -fx-text-fill: #4caf50;
     -fx-underline: false;
     -fx-cursor: hand;
-    -fx-padding: 0;
+    -fx-padding: 8 12;
     -fx-border-width: 0;
+    -fx-font-weight: bold;
 }
 
 .link-button:hover {
