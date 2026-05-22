@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<Pane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:id="overlayRoot"
+      fx:controller="ua.notion.presentation.controller.PlayerInventoryController"
+      styleClass="inventory-overlay"
+      pickOnBounds="false">
+
+    <VBox fx:id="inventoryPanel" styleClass="inventory-panel" spacing="8">
+        <HBox styleClass="inventory-header" alignment="CENTER_LEFT" spacing="8">
+            <Label text="Inventory" styleClass="inventory-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="totalLabel" styleClass="inventory-total"/>
+            <Button text="×" styleClass="inventory-close" onAction="#close"/>
+        </HBox>
+
+        <FlowPane fx:id="itemsFlow" styleClass="inventory-flow" hgap="6" vgap="6"/>
+
+        <VBox fx:id="emptyState" styleClass="inventory-empty" alignment="CENTER" spacing="4"
+              visible="false" managed="false">
+            <Label text="Empty" styleClass="inventory-empty-title"/>
+            <Label text="Harvest ripe crops to fill your bag" styleClass="inventory-empty-sub"/>
+        </VBox>
+    </VBox>
+
+</Pane>

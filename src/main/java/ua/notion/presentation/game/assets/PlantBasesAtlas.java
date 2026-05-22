@@ -97,14 +97,18 @@ public final class PlantBasesAtlas {
     }
 
     public boolean isHarvestable() {
-      return this == FRUITING || this == WITHERED;
+      return this == FRUITING;
     }
   }
 
-  public static int getPlantX(PlantType type, GrowthStage stage) {
-    int stageIndex = Math.min(stage.getOffset(), type.getStageCount() - 1);
-    int col = type.getStartColumn() + stageIndex * type.getColumnStep();
+  public static int getPlantX(PlantType type, int stageIndex) {
+    int idx = Math.min(Math.max(stageIndex, 0), type.getStageCount() - 1);
+    int col = type.getStartColumn() + idx * type.getColumnStep();
     return col * SOURCE_CELL_SIZE;
+  }
+
+  public static int getPlantX(PlantType type, GrowthStage stage) {
+    return getPlantX(type, stage.getOffset());
   }
 
   public static int getPlantY(PlantType type) {

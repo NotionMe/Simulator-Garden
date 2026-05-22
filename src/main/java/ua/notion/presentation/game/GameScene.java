@@ -12,8 +12,10 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import ua.notion.infrastructure.async.AsyncExecutor;
+import ua.notion.presentation.controller.PlayerInventoryController;
 import ua.notion.presentation.controller.SeedPlantingModalController;
 import ua.notion.presentation.game.assets.GardenTileAtlas;
+import ua.notion.presentation.game.plant.HarvestResult;
 import ua.notion.presentation.game.viewmodel.GameViewModel;
 
 public class GameScene {
@@ -29,6 +31,10 @@ public class GameScene {
   private AnimationTimer seedPickerPositionTimer;
   private int pendingBedCol = -1;
   private int pendingBedRow = -1;
+  private int harvestMessageTicks;
+
+  private Pane inventoryOverlay;
+  private PlayerInventoryController inventoryController;
 
   public GameScene() {
     this.canvas = new Canvas(GameConstants.CANVAS_WIDTH, GameConstants.CANVAS_HEIGHT);
@@ -49,8 +55,11 @@ public class GameScene {
     canvas.setOnKeyPressed(
         event -> {
           viewModel.getKeyboardHandler().handleKeyPressed(event);
-          if (event.getCode() == KeyCode.ESCAPE && seedPickerOverlay != null) {
+          if (event.getCode() == KeyCode.ESCAPE) {
             closeSeedPicker();
+            closeInventory();
+          } else if (event.getCode() == KeyCode.I) {
+            toggleInventory();
           }
         });
     canvas.setOnKeyReleased(viewModel.getKeyboardHandler()::handleKeyReleased);
@@ -89,6 +98,10 @@ public class GameScene {
         }
 
         if (GardenTileAtlas.isGardenBed(tileId)) {
+          int[] anchor = GardenTileAtlas.bedAnchorForTile(tileId, col, row);
+          if (tryHarvestOnBed(anchor[0], anchor[1])) {
+            return;
+          }
           showSeedPicker(col, row);
         }
       }
@@ -123,6 +136,19 @@ public class GameScene {
 
   private int getTileId(int col, int row) {
     return viewModel.getTileMap().getTileId(col, row);
+  }
+
+  private boolean tryHarvestOnBed(int anchorCol, int anchorRow) {
+    HarvestResult result = viewModel.tryHarvestAt(anchorCol, anchorRow);
+    if (result == HarvestResult.NO_PLANT) {
+      return false;
+    }
+    harvestMessageTicks = 180;
+    if (result == HarvestResult.SUCCESS && inventoryController != null) {
+      inventoryController.refresh();
+    }
+    System.out.println(viewModel.getLastHarvestMessage());
+    return true;
   }
 
   private void showSeedPicker(int col, int row) {
@@ -233,6 +259,69 @@ public class GameScene {
     panel.setLayoutY(y);
   }
 
+  private void toggleInventory() {
+    if (inventoryOverlay != null) {
+      closeInventory();
+    } else {
+      openInventory();
+    }
+  }
+
+  private void openInventory() {
+    closeInventory();
+
+    Pane overlay =
+        PlayerInventoryController.createPanel(
+            viewModel.getPlayerInventory(),
+            this::onInventoryClosed,
+            controller -> {
+              inventoryController = controller;
+              controller.refresh();
+            });
+
+    if (overlay == null || !(canvas.getParent() instanceof StackPane stack)) {
+      return;
+    }
+
+    inventoryOverlay = overlay;
+    stack.getChildren().add(overlay);
+    positionInventoryPanel();
+  }
+
+  private void onInventoryClosed() {
+    inventoryOverlay = null;
+    inventoryController = null;
+  }
+
+  private void closeInventory() {
+    if (inventoryOverlay != null && canvas.getParent() instanceof StackPane stack) {
+      stack.getChildren().remove(inventoryOverlay);
+    }
+    if (inventoryController != null) {
+      inventoryController.close();
+    } else {
+      onInventoryClosed();
+    }
+  }
+
+  private void positionInventoryPanel() {
+    if (inventoryController == null || inventoryOverlay == null) {
+      return;
+    }
+
+    var panel = inventoryController.getInventoryPanel();
+    inventoryOverlay.applyCss();
+    inventoryOverlay.layout();
+    panel.applyCss();
+    panel.autosize();
+
+    double panelW = panel.getWidth() > 0 ? panel.getWidth() : panel.prefWidth(-1);
+    double panelH = panel.getHeight() > 0 ? panel.getHeight() : panel.prefHeight(-1);
+
+    panel.setLayoutX(canvas.getWidth() - panelW - 16);
+    panel.setLayoutY(canvas.getHeight() - panelH - 16);
+  }
+
   public void initialize() {
     System.out.println("Initializing game scene...");
 
@@ -275,6 +364,7 @@ public class GameScene {
 
   public void stop() {
     closeSeedPicker();
+    closeInventory();
     if (gameLoop != null) {
       gameLoop.stop();
       System.out.println("Game loop stopped");
@@ -286,6 +376,9 @@ public class GameScene {
       return;
     }
     viewModel.update(deltaTime);
+    if (harvestMessageTicks > 0) {
+      harvestMessageTicks--;
+    }
   }
 
   public void render() {
@@ -388,7 +481,20 @@ public class GameScene {
     gc.setLineWidth(2);
     gc.strokeText("FPS: " + gameLoop.getFps(), 10, 20);
     gc.fillText("FPS: " + gameLoop.getFps(), 10, 20);
-    gc.fillText("WASD to move, G to grow · click bed to plant · Esc to close", 10, 40);
+    gc.fillText("WASD move · bed: plant/harvest · I inventory · G grow (debug)", 10, 40);
+    int total = viewModel.getPlayerInventory().getTotalCount();
+    gc.fillText("Inventory: " + total + (total == 1 ? " item" : " items"), 10, 58);
+
+    if (inventoryController != null) {
+      positionInventoryPanel();
+    }
+
+    if (harvestMessageTicks > 0) {
+      String msg = viewModel.getLastHarvestMessage();
+      if (!msg.isEmpty()) {
+        gc.fillText(msg, 10, 76);
+      }
+    }
   }
 
   public Canvas getCanvas() {

@@ -2,10 +2,13 @@ package ua.notion.presentation.game.viewmodel;
 
 import java.util.concurrent.CompletableFuture;
 import javafx.scene.input.KeyCode;
+import ua.notion.presentation.game.assets.PlantBasesAtlas.PlantType;
 import ua.notion.presentation.game.entity.Player;
 import ua.notion.presentation.game.input.KeyboardHandler;
 import ua.notion.presentation.game.map.TileMap;
+import ua.notion.presentation.game.plant.HarvestResult;
 import ua.notion.presentation.game.plant.PlantManager;
+import ua.notion.presentation.viewmodel.PlayerInventoryViewModel;
 import ua.notion.presentation.viewmodel.SeedInventoryViewModel;
 
 public class GameViewModel {
@@ -14,6 +17,9 @@ public class GameViewModel {
   private final KeyboardHandler keyboardHandler;
   private final PlantManager plantManager;
   private final SeedInventoryViewModel seedInventory;
+  private final PlayerInventoryViewModel playerInventory;
+
+  private String lastHarvestMessage = "";
 
   public GameViewModel(int mapWidth, int mapHeight) {
     this.tileMap = new TileMap(mapWidth, mapHeight);
@@ -21,6 +27,7 @@ public class GameViewModel {
     this.keyboardHandler = new KeyboardHandler();
     this.plantManager = new PlantManager(tileMap.getOrthoCoords());
     this.seedInventory = new SeedInventoryViewModel();
+    this.playerInventory = new PlayerInventoryViewModel();
   }
 
   public CompletableFuture<Void> loadAsync() {
@@ -32,10 +39,10 @@ public class GameViewModel {
       return;
     }
 
-    // Handle grow plants key (G)
+    plantManager.update(deltaTime);
+
     if (keyboardHandler.isJustPressed(KeyCode.G)) {
       plantManager.growAllPlants();
-      System.out.println("Growing all plants!");
     }
 
     int dx = 0;
@@ -64,6 +71,33 @@ public class GameViewModel {
     keyboardHandler.clearJustPressed();
   }
 
+  public HarvestResult tryHarvestAt(int bedAnchorCol, int bedAnchorRow) {
+    var plant = plantManager.getPlantAt(bedAnchorCol, bedAnchorRow);
+    PlantType cropType = plant != null && plant.isReadyToHarvest() ? plant.getPlantType() : null;
+
+    HarvestResult result = plantManager.tryHarvest(bedAnchorCol, bedAnchorRow, playerInventory);
+    lastHarvestMessage =
+        switch (result) {
+          case SUCCESS -> buildHarvestSuccessMessage(cropType);
+          case NOT_READY -> "Not ripe yet";
+          case WITHERED_GONE -> "Crop wilted away";
+          case NO_PLANT -> "";
+        };
+    return result;
+  }
+
+  private String buildHarvestSuccessMessage(PlantType type) {
+    if (type == null) {
+      return "Added to inventory";
+    }
+    String name = type.name().charAt(0) + type.name().substring(1).toLowerCase();
+    return "+" + name + " → inventory (" + playerInventory.getTotalCount() + " total)";
+  }
+
+  public String getLastHarvestMessage() {
+    return lastHarvestMessage;
+  }
+
   public TileMap getTileMap() {
     return tileMap;
   }
@@ -82,5 +116,9 @@ public class GameViewModel {
 
   public SeedInventoryViewModel getSeedInventory() {
     return seedInventory;
+  }
+
+  public PlayerInventoryViewModel getPlayerInventory() {
+    return playerInventory;
   }
 }

@@ -1,11 +1,13 @@
 package ua.notion.presentation.game.plant;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import javafx.scene.canvas.GraphicsContext;
 import ua.notion.presentation.game.assets.PlantBasesAtlas;
 import ua.notion.presentation.game.assets.PlantBasesAtlas.PlantType;
 import ua.notion.presentation.game.map.OrthogonalCoordinates;
+import ua.notion.presentation.viewmodel.PlayerInventoryViewModel;
 
 public class PlantManager {
   private final List<PlantSprite> plants;
@@ -17,23 +19,42 @@ public class PlantManager {
   }
 
   public void plantSeed(PlantType plantType, int tileX, int tileY) {
-    PlantSprite plant = new PlantSprite(plantType, tileX, tileY);
-    plants.add(plant);
+    if (hasPlantAt(tileX, tileY)) {
+      return;
+    }
+    plants.add(new PlantSprite(plantType, tileX, tileY));
   }
 
-  public void growPlant(int tileX, int tileY) {
-    plants.stream()
-        .filter(p -> p.getTileX() == tileX && p.getTileY() == tileY)
-        .forEach(PlantSprite::growNextStage);
+  public void update(double deltaSeconds) {
+    Iterator<PlantSprite> it = plants.iterator();
+    while (it.hasNext()) {
+      PlantSprite plant = it.next();
+      plant.update(deltaSeconds);
+      if (plant.isRemoved()) {
+        it.remove();
+      }
+    }
+  }
+
+  public HarvestResult tryHarvest(int tileX, int tileY, PlayerInventoryViewModel inventory) {
+    PlantSprite plant = getPlantAt(tileX, tileY);
+    if (plant == null) {
+      return HarvestResult.NO_PLANT;
+    }
+    if (plant.isWithering() || plant.isRemoved()) {
+      return HarvestResult.WITHERED_GONE;
+    }
+    if (!plant.isReadyToHarvest()) {
+      return HarvestResult.NOT_READY;
+    }
+
+    inventory.addItem(plant.getPlantType(), 1);
+    plants.remove(plant);
+    return HarvestResult.SUCCESS;
   }
 
   public void growAllPlants() {
     plants.forEach(PlantSprite::growNextStage);
-  }
-
-  public boolean harvestPlant(int tileX, int tileY) {
-    return plants.removeIf(
-        p -> p.getTileX() == tileX && p.getTileY() == tileY && p.isHarvestable());
   }
 
   public void render(GraphicsContext gc, double offsetX, double offsetY, double scale) {
