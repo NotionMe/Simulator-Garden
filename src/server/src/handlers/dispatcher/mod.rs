@@ -2,6 +2,7 @@ pub mod achievement_dispatcher;
 pub mod garden_dispatcher;
 pub mod plant_dispatcher;
 pub mod plant_instance_dispatcher;
+pub mod player_inventory_item_dispatcher;
 pub mod task_dispatcher;
 pub mod user_dispatcher;
 pub mod weather_event_dispatcher;
@@ -25,6 +26,12 @@ pub async fn dispatch_request(request: RequestMessage, state: AppState) -> Respo
         }
         ResourceType::WeatherEvent => {
             weather_event_dispatcher::dispatch_weather_event_command(request, state).await
+        }
+        ResourceType::PlayerInventoryItem => {
+            player_inventory_item_dispatcher::dispatch_player_inventory_item_command(
+                request, state,
+            )
+            .await
         }
     }
 }

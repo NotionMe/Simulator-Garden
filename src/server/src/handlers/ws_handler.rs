@@ -18,7 +18,7 @@ pub async fn handle_socket(mut socket: WebSocket, state: AppState) {
     while let Some(Ok(msg)) = socket.recv().await {
         if let Message::Text(text) = msg {
             // перевіряти чи запрос verified!
-            
+
             let request = match serde_json::from_str::<RequestMessage>(&text) {
                 Ok(request) => request,
                 Err(err) => {
@@ -32,7 +32,7 @@ pub async fn handle_socket(mut socket: WebSocket, state: AppState) {
 
                     let _ = socket
                         .send(Message::Text(
-                            serde_json::to_string(&response).unwrap_or_default(),
+                            serde_json::to_string(&response).unwrap_or_default().into(),
                         ))
                         .await;
 
@@ -56,7 +56,7 @@ pub async fn handle_socket(mut socket: WebSocket, state: AppState) {
                 }
             };
 
-            let _ = socket.send(Message::Text(response_text)).await;
+            let _ = socket.send(Message::Text(response_text.into())).await;
         }
     }
 }

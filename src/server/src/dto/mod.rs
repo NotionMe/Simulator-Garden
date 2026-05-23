@@ -1,5 +1,6 @@
 pub mod achievement_dto;
 pub mod common;
+pub mod player_inventory_item_dto;
 pub mod garden_dto;
 pub mod plant_dto;
 pub mod plant_instance_dto;
@@ -9,6 +10,7 @@ pub mod weather_event_dto;
 
 pub use achievement_dto::*;
 pub use common::*;
+pub use player_inventory_item_dto::*;
 pub use garden_dto::*;
 pub use plant_dto::*;
 pub use plant_instance_dto::*;

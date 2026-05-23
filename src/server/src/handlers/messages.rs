@@ -45,4 +45,5 @@ pub enum ResourceType {
     Task,
     Achievement,
     WeatherEvent,
+    PlayerInventoryItem,
 }
