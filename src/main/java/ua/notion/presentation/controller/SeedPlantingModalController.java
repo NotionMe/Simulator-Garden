@@ -35,6 +35,10 @@ public class SeedPlantingModalController {
     populatePicker();
   }
 
+  public void refresh() {
+    populatePicker();
+  }
+
   private void populatePicker() {
     var availableSeeds = viewModel.getAvailableSeeds();
 

@@ -7,6 +7,7 @@ import ua.notion.domain.service.AchievementService;
 import ua.notion.domain.service.GardenService;
 import ua.notion.domain.service.PlantInstanceService;
 import ua.notion.domain.service.PlantService;
+import ua.notion.domain.service.PlayerInventoryItemService;
 import ua.notion.domain.service.TaskService;
 import ua.notion.domain.service.UserService;
 import ua.notion.domain.service.WeatherEventService;
@@ -14,6 +15,7 @@ import ua.notion.domain.service.auth.AuthenticationService;
 import ua.notion.domain.service.auth.WebSocketAuthenticationService;
 import ua.notion.infrastructure.persistence.PersistenceContext;
 import ua.notion.infrastructure.websocket.WebSocketApiClient;
+import ua.notion.presentation.game.catalog.PlantTypeResolver;
 
 public class ServiceModule extends AbstractModule {
 
@@ -68,5 +70,17 @@ public class ServiceModule extends AbstractModule {
   @Singleton
   AuthenticationService provideAuthenticationService(WebSocketApiClient apiClient) {
     return new WebSocketAuthenticationService(apiClient);
+  }
+
+  @Provides
+  @Singleton
+  PlayerInventoryItemService providePlayerInventoryItemService(PersistenceContext context) {
+    return new PlayerInventoryItemService(context);
+  }
+
+  @Provides
+  @Singleton
+  PlantTypeResolver providePlantTypeResolver(PlantService plantService) {
+    return new PlantTypeResolver(plantService);
   }
 }

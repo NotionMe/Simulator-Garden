@@ -27,12 +27,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import ua.notion.domain.entity.User;
+import ua.notion.domain.service.auth.AuthPayloads;
 
 /** Client for the Rust server HTTP auth and WebSocket CRUD API. */
 public class WebSocketApiClient implements AutoCloseable {
 
-  public static final String DEFAULT_WS_URL =
-      "wss://rustserver-stan.azurewebsites.net/server/ws";
+  public static final String DEFAULT_WS_URL = "wss://rustserver-stan.azurewebsites.net/server/ws";
 
   private static final long DEFAULT_TIMEOUT_SECONDS = 10;
 
@@ -98,12 +98,7 @@ public class WebSocketApiClient implements AutoCloseable {
 
   public AuthSession loginAccount(String identifier, String password) {
     JsonObject payload = new JsonObject();
-    if (identifier.contains("@")) {
-      payload.addProperty("email", identifier);
-    } else {
-      payload.addProperty("username", identifier);
-    }
-    payload.addProperty("password", password);
+    AuthPayloads.loginPayload(identifier, password).forEach(payload::addProperty);
     return postAuth("/api/login", "login", payload);
   }
 
@@ -124,11 +119,19 @@ public class WebSocketApiClient implements AutoCloseable {
       HttpResponse<String> response =
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
+      if (response.statusCode() == 401) {
+        throw new WebSocketApiException("Invalid or expired token");
+      }
+
       AuthorizationResponse authResponse =
           gson.fromJson(response.body(), AuthorizationResponse.class);
 
       if (authResponse.error() != null && !authResponse.error().isBlank()) {
         throw new WebSocketApiException(authResponse.error());
+      }
+
+      if (response.statusCode() >= 400) {
+        throw new WebSocketApiException("Auth request failed with HTTP " + response.statusCode());
       }
 
       if (authResponse.payload() == null || authResponse.payload().isJsonNull()) {

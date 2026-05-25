@@ -4,6 +4,7 @@ import ua.notion.infrastructure.persistence.contract.AchievementRepository;
 import ua.notion.infrastructure.persistence.contract.GardenRepository;
 import ua.notion.infrastructure.persistence.contract.PlantInstanceRepository;
 import ua.notion.infrastructure.persistence.contract.PlantRepository;
+import ua.notion.infrastructure.persistence.contract.PlayerInventoryItemRepository;
 import ua.notion.infrastructure.persistence.contract.TaskRepository;
 import ua.notion.infrastructure.persistence.contract.UserRepository;
 import ua.notion.infrastructure.persistence.contract.WeatherEventRepository;
@@ -11,6 +12,7 @@ import ua.notion.infrastructure.persistence.impl.AchievementRepositoryImpl;
 import ua.notion.infrastructure.persistence.impl.GardenRepositoryImpl;
 import ua.notion.infrastructure.persistence.impl.PlantInstanceRepositoryImpl;
 import ua.notion.infrastructure.persistence.impl.PlantRepositoryImpl;
+import ua.notion.infrastructure.persistence.impl.PlayerInventoryItemRepositoryImpl;
 import ua.notion.infrastructure.persistence.impl.TaskRepositoryImpl;
 import ua.notion.infrastructure.persistence.impl.UserRepositoryImpl;
 import ua.notion.infrastructure.persistence.impl.WeatherEventRepositoryImpl;
@@ -26,6 +28,7 @@ public class PersistenceContext {
   private final TaskRepository taskRepository;
   private final WeatherEventRepository weatherEventRepository;
   private final AchievementRepository achievementRepository;
+  private final PlayerInventoryItemRepository playerInventoryItemRepository;
 
   public PersistenceContext(WebSocketApiClient apiClient) {
     this.apiClient = apiClient;
@@ -36,6 +39,7 @@ public class PersistenceContext {
     this.taskRepository = new TaskRepositoryImpl(apiClient);
     this.weatherEventRepository = new WeatherEventRepositoryImpl(apiClient);
     this.achievementRepository = new AchievementRepositoryImpl(apiClient);
+    this.playerInventoryItemRepository = new PlayerInventoryItemRepositoryImpl(apiClient);
   }
 
   public UserRepository getUserRepository() {
@@ -64,6 +68,10 @@ public class PersistenceContext {
 
   public AchievementRepository getAchievementRepository() {
     return achievementRepository;
+  }
+
+  public PlayerInventoryItemRepository getPlayerInventoryItemRepository() {
+    return playerInventoryItemRepository;
   }
 
   public void close() {

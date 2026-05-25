@@ -2,7 +2,10 @@ package ua.notion.presentation.game.viewmodel;
 
 import java.util.concurrent.CompletableFuture;
 import javafx.scene.input.KeyCode;
+import ua.notion.domain.service.PlayerInventoryItemService;
+import ua.notion.infrastructure.async.AsyncExecutor;
 import ua.notion.presentation.game.assets.PlantBasesAtlas.PlantType;
+import ua.notion.presentation.game.catalog.PlantTypeResolver;
 import ua.notion.presentation.game.entity.Player;
 import ua.notion.presentation.game.input.KeyboardHandler;
 import ua.notion.presentation.game.map.TileMap;
@@ -10,6 +13,7 @@ import ua.notion.presentation.game.plant.HarvestResult;
 import ua.notion.presentation.game.plant.PlantManager;
 import ua.notion.presentation.viewmodel.PlayerInventoryViewModel;
 import ua.notion.presentation.viewmodel.SeedInventoryViewModel;
+import ua.notion.presentation.viewmodel.ServerBackedInventory;
 
 public class GameViewModel {
   private final TileMap tileMap;
@@ -21,17 +25,31 @@ public class GameViewModel {
 
   private String lastHarvestMessage = "";
 
-  public GameViewModel(int mapWidth, int mapHeight) {
+  public GameViewModel(
+      int userId,
+      PlayerInventoryItemService inventoryService,
+      PlantTypeResolver plantTypes,
+      int mapWidth,
+      int mapHeight) {
     this.tileMap = new TileMap(mapWidth, mapHeight);
     this.player = new Player(10, 10);
     this.keyboardHandler = new KeyboardHandler();
     this.plantManager = new PlantManager(tileMap.getOrthoCoords());
-    this.seedInventory = new SeedInventoryViewModel();
-    this.playerInventory = new PlayerInventoryViewModel();
+    ServerBackedInventory sharedInventory =
+        new ServerBackedInventory(userId, inventoryService, plantTypes);
+    this.seedInventory = new SeedInventoryViewModel(sharedInventory);
+    this.playerInventory = new PlayerInventoryViewModel(sharedInventory);
   }
 
   public CompletableFuture<Void> loadAsync() {
-    return tileMap.loadAsync();
+    return tileMap
+        .loadAsync()
+        .thenCompose(
+            ignored ->
+                AsyncExecutor.runAsync(
+                    () -> {
+                      playerInventory.loadFromServer();
+                    }));
   }
 
   public void update(double deltaTime) {

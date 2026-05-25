@@ -3,7 +3,11 @@ package ua.notion.presentation.controller;
 import javafx.fxml.FXML;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import ua.notion.domain.entity.User;
+import ua.notion.domain.service.PlayerInventoryItemService;
+import ua.notion.infrastructure.config.AppInjector;
 import ua.notion.presentation.game.GameScene;
+import ua.notion.presentation.game.catalog.PlantTypeResolver;
 import ua.notion.presentation.ui.SceneCoordinator;
 
 public class GameController {
@@ -12,16 +16,10 @@ public class GameController {
   @FXML private StackPane gameRoot;
 
   private GameScene gameScene;
+  private User currentUser;
 
   @FXML
   public void initialize() {
-    gameScene = new GameScene();
-    gameScene.initialize();
-
-    gameContainer.getChildren().add(gameScene.getCanvas());
-    gameScene.getCanvas().setWidth(1);
-    gameScene.getCanvas().setHeight(1);
-
     gameContainer.widthProperty().addListener((obs, oldW, newW) -> resizeCanvas());
     gameContainer.heightProperty().addListener((obs, oldH, newH) -> resizeCanvas());
     gameRoot
@@ -34,6 +32,30 @@ public class GameController {
                     .setOnContentDispose(this::shutdown);
               }
             });
+    startGameIfReady();
+  }
+
+  public void setCurrentUser(User user) {
+    this.currentUser = user;
+    startGameIfReady();
+  }
+
+  private void startGameIfReady() {
+    if (currentUser == null || currentUser.getId() == null || gameScene != null) {
+      return;
+    }
+
+    var injector = AppInjector.get();
+    PlayerInventoryItemService inventoryService =
+        injector.getInstance(PlayerInventoryItemService.class);
+    PlantTypeResolver plantTypes = injector.getInstance(PlantTypeResolver.class);
+
+    gameScene = new GameScene(currentUser.getId(), inventoryService, plantTypes);
+    gameScene.initialize();
+
+    gameContainer.getChildren().add(gameScene.getCanvas());
+    gameScene.getCanvas().setWidth(1);
+    gameScene.getCanvas().setHeight(1);
 
     resizeCanvas();
     gameScene.start();

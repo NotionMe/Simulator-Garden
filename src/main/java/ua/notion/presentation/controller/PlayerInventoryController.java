@@ -14,7 +14,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import ua.notion.presentation.game.assets.PlantIconCache;
 import ua.notion.presentation.viewmodel.PlayerInventoryViewModel;
-import ua.notion.presentation.viewmodel.PlayerInventoryViewModel.InventoryEntry;
+import ua.notion.presentation.viewmodel.ServerBackedInventory.InventoryEntry;
 
 public class PlayerInventoryController {
 

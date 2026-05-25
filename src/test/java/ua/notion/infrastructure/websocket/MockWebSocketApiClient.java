@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import ua.notion.domain.entity.User;
+import ua.notion.domain.service.auth.AuthPayloads;
 
 public class MockWebSocketApiClient extends WebSocketApiClient {
 
@@ -52,6 +53,20 @@ public class MockWebSocketApiClient extends WebSocketApiClient {
 
   @Override
   public AuthSession registerAccount(String username, String email, String password) {
+    if (password == null || password.length() < 8) {
+      throw new WebSocketApiException("Password must be at least 8 characters");
+    }
+
+    List<Object> users = databases.computeIfAbsent("user", k -> new ArrayList<>());
+    for (Object existing : users) {
+      if (username.equalsIgnoreCase((String) getFieldValue(existing, "username"))) {
+        throw new WebSocketApiException("Username already taken");
+      }
+      if (email.equalsIgnoreCase((String) getFieldValue(existing, "email"))) {
+        throw new WebSocketApiException("Email already taken");
+      }
+    }
+
     User user =
         send(
             "create",
@@ -65,9 +80,7 @@ public class MockWebSocketApiClient extends WebSocketApiClient {
 
   @Override
   public AuthSession loginAccount(String identifier, String password) {
-    Map<String, String> payload =
-        ua.notion.domain.service.auth.WebSocketAuthenticationService.buildLoginPayload(
-            identifier, password);
+    Map<String, String> payload = AuthPayloads.loginPayload(identifier, password);
     User user = send("login", "user", payload, User.class);
     String token = "mock-token-" + user.getId();
     setAuthToken(token);

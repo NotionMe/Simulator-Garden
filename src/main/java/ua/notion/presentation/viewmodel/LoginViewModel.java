@@ -70,6 +70,10 @@ public class LoginViewModel {
     return switch (serverMessage) {
       case "Invalid credentials" -> "Invalid username or password";
       case "Record not found" -> "User not found";
+      case "Failed to read record from database" -> "Enter either username or email, not both";
+      case "Username already taken" -> "This username is already in use";
+      case "Email already taken" -> "This email is already registered";
+      case "Password must be at least 8 characters" -> "Password must be at least 8 characters";
       default -> serverMessage;
     };
   }

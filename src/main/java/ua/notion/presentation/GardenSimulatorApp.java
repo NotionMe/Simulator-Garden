@@ -8,6 +8,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.stage.Stage;
 import ua.notion.domain.service.auth.AuthenticationService;
+import ua.notion.infrastructure.config.AppInjector;
 import ua.notion.infrastructure.config.PersistenceModule;
 import ua.notion.infrastructure.config.ServiceModule;
 import ua.notion.infrastructure.persistence.PersistenceContext;
@@ -21,6 +22,7 @@ public class GardenSimulatorApp extends Application {
   @Override
   public void init() {
     injector = Guice.createInjector(new PersistenceModule(), new ServiceModule());
+    AppInjector.init(injector);
   }
 
   @Override

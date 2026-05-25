@@ -6,6 +6,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import ua.notion.domain.entity.User;
 import ua.notion.domain.service.auth.AuthenticationService;
+import ua.notion.infrastructure.websocket.WebSocketApiException;
 
 public class RegisterViewModel {
   private final AuthenticationService authService;
@@ -70,10 +71,26 @@ public class RegisterViewModel {
     } catch (IllegalArgumentException e) {
       setError(e.getMessage());
       throw e;
+    } catch (WebSocketApiException e) {
+      setError(mapServerRegistrationError(e.getMessage()));
+      throw e;
     } catch (Exception e) {
       setError("Registration failed: " + e.getMessage());
       throw new RuntimeException("Registration failed", e);
     }
+  }
+
+  private static String mapServerRegistrationError(String serverMessage) {
+    if (serverMessage == null || serverMessage.isBlank()) {
+      return "Registration failed";
+    }
+    return switch (serverMessage) {
+      case "Username already taken" -> "This username is already in use";
+      case "Email already taken" -> "This email is already registered";
+      case "Password must be at least 8 characters" -> "Password must be at least 8 characters";
+      case "Failed to save record to database" -> "Could not create account. Check your details.";
+      default -> serverMessage;
+    };
   }
 
   public void clearError() {

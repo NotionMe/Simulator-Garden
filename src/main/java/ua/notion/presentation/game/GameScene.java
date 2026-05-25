@@ -36,10 +36,19 @@ public class GameScene {
   private Pane inventoryOverlay;
   private PlayerInventoryController inventoryController;
 
-  public GameScene() {
+  public GameScene(
+      int userId,
+      ua.notion.domain.service.PlayerInventoryItemService inventoryService,
+      ua.notion.presentation.game.catalog.PlantTypeResolver plantTypes) {
     this.canvas = new Canvas(GameConstants.CANVAS_WIDTH, GameConstants.CANVAS_HEIGHT);
     this.gc = canvas.getGraphicsContext2D();
-    this.viewModel = new GameViewModel(GameConstants.MAP_WIDTH, GameConstants.MAP_HEIGHT);
+    this.viewModel =
+        new GameViewModel(
+            userId,
+            inventoryService,
+            plantTypes,
+            GameConstants.MAP_WIDTH,
+            GameConstants.MAP_HEIGHT);
     setupInputHandlers();
   }
 
@@ -178,7 +187,11 @@ public class GameScene {
       return;
     }
     if (!viewModel.getSeedInventory().consumeSeed(plantType)) {
+      System.out.println("No seeds left for " + plantType);
       return;
+    }
+    if (seedPickerController != null) {
+      seedPickerController.refresh();
     }
     viewModel.getPlantManager().plantSeed(plantType, anchor[0], anchor[1]);
     System.out.println("Planted " + plantType + " at bed (" + anchor[0] + ", " + anchor[1] + ")");

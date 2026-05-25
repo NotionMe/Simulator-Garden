@@ -1,6 +1,5 @@
 package ua.notion.presentation.controller;
 
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -13,8 +12,8 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import ua.notion.domain.entity.User;
 import ua.notion.domain.service.auth.AuthenticationService;
-import ua.notion.infrastructure.config.PersistenceModule;
-import ua.notion.infrastructure.config.ServiceModule;
+import ua.notion.infrastructure.config.AppInjector;
+import ua.notion.infrastructure.websocket.WebSocketApiClient;
 import ua.notion.presentation.controller.auth.LoginController;
 import ua.notion.presentation.ui.SceneCoordinator;
 
@@ -70,14 +69,16 @@ public class MenuController {
     return SceneCoordinator.forNode(menuRoot != null ? menuRoot : playButton);
   }
 
-  private Injector createInjector() {
-    return Guice.createInjector(new PersistenceModule(), new ServiceModule());
-  }
-
   @FXML
   private void handlePlay() {
     try {
-      coordinator().loadContent("/fxml/game.fxml");
+      if (currentUser == null || currentUser.getId() == null) {
+        coordinator().showMessageOverlay("Error", "Please log in before starting the game.", false);
+        return;
+      }
+      javafx.fxml.FXMLLoader loader = coordinator().loadContent("/fxml/game.fxml");
+      GameController gameController = loader.getController();
+      gameController.setCurrentUser(currentUser);
       coordinator().getStage().setTitle("Garden Simulator - Game");
     } catch (Exception e) {
       coordinator().showMessageOverlay("Error", "Failed to start game: " + e.getMessage(), false);
@@ -151,7 +152,8 @@ public class MenuController {
   private void handleLogout() {
     try {
       coordinator().hideOverlay();
-      Injector injector = createInjector();
+      Injector injector = AppInjector.get();
+      injector.getInstance(WebSocketApiClient.class).setAuthToken(null);
       FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
       AuthenticationService authService = injector.getInstance(AuthenticationService.class);
       LoginController loginController = new LoginController(authService);
@@ -170,7 +172,7 @@ public class MenuController {
     SceneCoordinator nav = coordinator();
     try {
       nav.hideOverlay();
-      Injector injector = createInjector();
+      Injector injector = AppInjector.get();
       FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
       Object controller = factory.create(loader, injector);
       Parent root = loader.load();
