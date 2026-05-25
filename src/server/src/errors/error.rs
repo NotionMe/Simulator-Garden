@@ -1,11 +1,21 @@
 use thiserror::Error;
 
+use crate::errors::error;
+
 #[derive(Error, Debug)]
 pub enum AppError {
     #[error("Failed authorization")]
     AuthError,
     #[error("Password empty")]
     PasswordEmpty,
+    #[error("Failed verifying keys")]
+    VerifytingKeys,
+    #[error("Failed create keys")]
+    SigningKeys,
+    #[error("Invalid or expired token")]
+    InvalidToken,
+    #[error("Failed to issue token")]
+    TokenError,
 }
 
 pub type AppResult<T> = std::result::Result<T, AppError>;
@@ -60,3 +70,13 @@ pub enum CommandError {
 }
 
 pub type CmResult<T> = std::result::Result<T, CommandError>;
+
+#[derive(Error, Debug)]
+pub enum ApiHandleError {
+    #[error("Failed post")]
+    FailedPost,
+    #[error("Failed get")]
+    FailedGet,
+}
+
+pub type ApiError<T> = std::result::Result<T, ApiHandleError>;

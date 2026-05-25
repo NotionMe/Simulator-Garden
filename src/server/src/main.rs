@@ -1,4 +1,7 @@
-use axum::{Router, routing::get};
+use axum::{
+    Router,
+    routing::{get, post},
+};
 use server::{handlers::ws_handler, state::app_state::AppState};
 use tokio::net::TcpListener;
 
@@ -10,6 +13,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let app = Router::new()
         .route("/server/ws", get(ws_handler::handler))
+        .route("/api/login", post(ws_handler::post_authorization))
         .with_state(app_state);
 
     let listener = TcpListener::bind("0.0.0.0:3000").await?;

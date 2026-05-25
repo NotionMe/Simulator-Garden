@@ -1,6 +1,22 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthorizationRequestMessage {
+    pub request_id: Option<String>,
+    pub reason: String,
+    pub payload: serde_json::Value,
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthorizationResponeMessage {
+    pub request_id: Option<String>,
+    pub reason: String,
+    pub payload: Option<serde_json::Value>,
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RequestMessage {
     pub request_id: Option<String>,
     pub command: CommandType,
