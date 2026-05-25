@@ -34,6 +34,15 @@ pub enum DatabaseError {
     #[error("Invalid credentials")]
     InvalidCredentials,
 
+    #[error("Username already taken")]
+    UsernameTaken,
+
+    #[error("Email already taken")]
+    EmailTaken,
+
+    #[error("Password must be at least 8 characters")]
+    WeakPassword,
+
     #[error("Failed to delete record to database")]
     FailedToDelete,
 

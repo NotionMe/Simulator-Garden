@@ -23,13 +23,7 @@ public class PersistenceModule extends AbstractModule {
   @Provides
   @Singleton
   WebSocketApiClient provideWebSocketApiClient() {
-    WebSocketApiClient client = new WebSocketApiClient();
-    try {
-      client.connect();
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to connect to WebSocket server", e);
-    }
-    return client;
+    return new WebSocketApiClient();
   }
 
   @Provides

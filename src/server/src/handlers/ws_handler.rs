@@ -1,5 +1,4 @@
 use axum::{
-    Json,
     extract::{
         Query, State, WebSocketUpgrade,
         ws::{Message, WebSocket},
@@ -8,21 +7,14 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use serde::Deserialize;
-use serde_json::json;
 use tracing::{info, warn};
 
 use crate::{
-    dto::LoginUserDto,
     handlers::{
         dispatcher::dispatch_request,
-        messages::{
-            AuthorizationRequestMessage, AuthorizationResponeMessage, RequestMessage,
-            ResponseMessage, ResponseStatus,
-        },
+        messages::{RequestMessage, ResponseMessage, ResponseStatus},
     },
-    repositories::user_repository::PgUserRepository,
     services::auth::jwt_service::JwtClaims,
-    services::user_service::UserService,
     state::app_state::AppState,
 };
 
@@ -105,53 +97,6 @@ pub async fn handler(
             warn!(?err, "Rejected WebSocket connection: invalid token");
             unauthorized("Invalid or expired token")
         }
-    }
-}
-
-pub async fn post_authorization(
-    State(state): State<AppState>,
-    Json(body): Json<AuthorizationRequestMessage>,
-) -> impl IntoResponse {
-    let repo = PgUserRepository::new(state.db_pool.clone());
-    let service = UserService::new(repo);
-
-    let dto = match serde_json::from_value::<LoginUserDto>(body.payload.clone()) {
-        Ok(dto) => dto,
-        Err(err) => {
-            return Json(AuthorizationResponeMessage {
-                request_id: body.request_id,
-                reason: body.reason,
-                payload: None,
-                error: Some(format!("Failed payload: {}", err)),
-            });
-        }
-    };
-
-    match service.login_user(dto).await {
-        Ok(user) => match state.jwt.issue_token(&user) {
-            Ok(token) => Json(AuthorizationResponeMessage {
-                request_id: body.request_id,
-                reason: "Success authorization".into(),
-                payload: Some(json!({
-                    "token": token,
-                    "public_key": state.signing_keys.public_key_hex(),
-                    "user": user,
-                })),
-                error: None,
-            }),
-            Err(err) => Json(AuthorizationResponeMessage {
-                request_id: body.request_id,
-                reason: "Failed".into(),
-                payload: None,
-                error: Some(err.to_string()),
-            }),
-        },
-        Err(err) => Json(AuthorizationResponeMessage {
-            request_id: body.request_id,
-            reason: "Failed".into(),
-            payload: None,
-            error: Some(err.to_string()),
-        }),
     }
 }
 

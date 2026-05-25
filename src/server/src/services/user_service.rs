@@ -24,20 +24,20 @@ where
     }
 
     pub async fn create_user(&self, dto: CreateUserDto) -> DbResult<UserResponseDto> {
-        if dto.username.trim().is_empty() {
+        if dto.username.trim().is_empty() || dto.email.trim().is_empty() {
             return Err(DatabaseError::FailedToSave);
         }
 
-        if dto.email.trim().is_empty() {
-            return Err(DatabaseError::FailedToSave);
+        if dto.password.len() < 8 {
+            return Err(DatabaseError::WeakPassword);
         }
 
         if self.repo.exists_by_username(&dto.username).await? {
-            return Err(DatabaseError::FailedToSave);
+            return Err(DatabaseError::UsernameTaken);
         }
 
         if self.repo.exists_by_email(&dto.email).await? {
-            return Err(DatabaseError::FailedToSave);
+            return Err(DatabaseError::EmailTaken);
         }
 
         let auth_service = AuthorizationService::new();

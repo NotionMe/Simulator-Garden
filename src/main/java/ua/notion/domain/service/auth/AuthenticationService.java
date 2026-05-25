@@ -5,11 +5,8 @@ import ua.notion.domain.entity.User;
 import ua.notion.infrastructure.websocket.WebSocketApiException;
 
 /**
- * Client authentication API aligned with the WebSocket {@code user} resource.
- *
- * <p>Login uses {@code command: "login"} with {@code username} or {@code email} plus plain {@code
- * password} in the payload. Registration uses {@code command: "create"}. The server hashes
- * passwords; the client must not hash them before sending.
+ * Client authentication via HTTP ({@code POST /api/register}, {@code POST /api/login}), then
+ * WebSocket with the returned JWT. The server hashes passwords; the client sends plain text only.
  */
 public interface AuthenticationService {
 

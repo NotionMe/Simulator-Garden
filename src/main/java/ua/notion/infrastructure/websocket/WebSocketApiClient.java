@@ -9,8 +9,12 @@ import com.google.gson.JsonPrimitive;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.net.http.WebSocket;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -22,28 +26,32 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import ua.notion.domain.entity.User;
 
-/** Client for the Rust server WebSocket CRUD API. */
+/** Client for the Rust server HTTP auth and WebSocket CRUD API. */
 public class WebSocketApiClient implements AutoCloseable {
 
-  public static final String DEFAULT_URL = "wss://rustserver-stan.azurewebsites.net/server/ws";
+  public static final String DEFAULT_WS_URL =
+      "wss://rustserver-stan.azurewebsites.net/server/ws";
+
   private static final long DEFAULT_TIMEOUT_SECONDS = 10;
 
-  private final URI serverUri;
+  private final URI baseWsUri;
   private final HttpClient httpClient;
   private final Gson gson;
   private final Map<String, CompletableFuture<ApiResponse>> pendingRequests =
       new ConcurrentHashMap<>();
 
+  private volatile String authToken;
   private volatile WebSocket webSocket;
   private volatile CompletableFuture<Void> connectedFuture;
 
   public WebSocketApiClient() {
-    this(System.getProperty("server.ws.url", DEFAULT_URL));
+    this(System.getProperty("server.ws.url", DEFAULT_WS_URL));
   }
 
   public WebSocketApiClient(String serverUrl) {
-    this.serverUri = URI.create(Objects.requireNonNull(serverUrl, "serverUrl cannot be null"));
+    this.baseWsUri = stripQuery(URI.create(Objects.requireNonNull(serverUrl, "serverUrl")));
     this.httpClient = HttpClient.newHttpClient();
     this.gson =
         new GsonBuilder()
@@ -53,15 +61,118 @@ public class WebSocketApiClient implements AutoCloseable {
             .create();
   }
 
+  public static String httpBaseUrl() {
+    String explicit = System.getProperty("server.http.url");
+    if (explicit != null && !explicit.isBlank()) {
+      return explicit.replaceAll("/$", "");
+    }
+
+    String wsUrl = System.getProperty("server.ws.url", DEFAULT_WS_URL);
+    URI uri = URI.create(wsUrl);
+    String scheme = "wss".equalsIgnoreCase(uri.getScheme()) ? "https" : "http";
+    int port = uri.getPort();
+    if (port < 0) {
+      port = "wss".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
+    }
+    return scheme + "://" + uri.getHost() + ":" + port;
+  }
+
+  public synchronized void setAuthToken(String token) {
+    this.authToken = token;
+    if (webSocket != null) {
+      disconnectQuietly();
+    }
+  }
+
+  public String getAuthToken() {
+    return authToken;
+  }
+
+  public AuthSession registerAccount(String username, String email, String password) {
+    JsonObject payload = new JsonObject();
+    payload.addProperty("username", username);
+    payload.addProperty("email", email);
+    payload.addProperty("password", password);
+    return postAuth("/api/register", "register", payload);
+  }
+
+  public AuthSession loginAccount(String identifier, String password) {
+    JsonObject payload = new JsonObject();
+    if (identifier.contains("@")) {
+      payload.addProperty("email", identifier);
+    } else {
+      payload.addProperty("username", identifier);
+    }
+    payload.addProperty("password", password);
+    return postAuth("/api/login", "login", payload);
+  }
+
+  protected AuthSession postAuth(String path, String reason, JsonObject payload) {
+    JsonObject body = new JsonObject();
+    body.addProperty("request_id", "java-" + UUID.randomUUID());
+    body.addProperty("reason", reason);
+    body.add("payload", payload);
+
+    HttpRequest request =
+        HttpRequest.newBuilder()
+            .uri(URI.create(httpBaseUrl() + path))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(body)))
+            .build();
+
+    try {
+      HttpResponse<String> response =
+          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+      AuthorizationResponse authResponse =
+          gson.fromJson(response.body(), AuthorizationResponse.class);
+
+      if (authResponse.error() != null && !authResponse.error().isBlank()) {
+        throw new WebSocketApiException(authResponse.error());
+      }
+
+      if (authResponse.payload() == null || authResponse.payload().isJsonNull()) {
+        throw new WebSocketApiException("Empty auth response from server");
+      }
+
+      JsonObject data = authResponse.payload().getAsJsonObject();
+      String token = data.get("token").getAsString();
+      String publicKey =
+          data.has("public_key") && !data.get("public_key").isJsonNull()
+              ? data.get("public_key").getAsString()
+              : null;
+      User user = gson.fromJson(data.get("user"), User.class);
+
+      setAuthToken(token);
+      connect();
+
+      return new AuthSession(token, publicKey, user);
+    } catch (WebSocketApiException e) {
+      throw e;
+    } catch (IOException e) {
+      throw new WebSocketApiException("Failed to call " + path, e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new WebSocketApiException("Interrupted during " + path, e);
+    }
+  }
+
   public synchronized CompletableFuture<Void> connectAsync() {
+    String token = authToken;
+    if (token == null || token.isBlank()) {
+      return CompletableFuture.failedFuture(
+          new WebSocketApiException("Not authenticated. Login or register first."));
+    }
+
     if (webSocket != null && !webSocket.isInputClosed() && !webSocket.isOutputClosed()) {
       return CompletableFuture.completedFuture(null);
     }
 
+    URI target = wsUriWithToken(token);
     connectedFuture = new CompletableFuture<>();
     httpClient
         .newWebSocketBuilder()
-        .buildAsync(serverUri, new Listener())
+        .buildAsync(target, new Listener())
         .whenComplete(
             (socket, error) -> {
               if (error != null) {
@@ -144,12 +255,36 @@ public class WebSocketApiClient implements AutoCloseable {
     }
   }
 
+  private URI wsUriWithToken(String token) {
+    String encoded = URLEncoder.encode(token, StandardCharsets.UTF_8);
+    String base = baseWsUri.toString();
+    String separator = base.contains("?") ? "&" : "?";
+    return URI.create(base + separator + "token=" + encoded);
+  }
+
+  private static URI stripQuery(URI uri) {
+    if (uri.getRawQuery() == null) {
+      return uri;
+    }
+    return URI.create(uri.getScheme() + "://" + uri.getRawAuthority() + uri.getRawPath());
+  }
+
+  private void disconnectQuietly() {
+    WebSocket socket = webSocket;
+    webSocket = null;
+    connectedFuture = null;
+    if (socket != null) {
+      try {
+        socket.sendClose(WebSocket.NORMAL_CLOSURE, "Reconnecting").join();
+      } catch (Exception ignored) {
+        // Best effort close before reconnecting with a new token.
+      }
+    }
+  }
+
   @Override
   public synchronized void close() throws IOException {
-    if (webSocket != null) {
-      webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "Client shutdown").join();
-      webSocket = null;
-    }
+    disconnectQuietly();
     pendingRequests
         .values()
         .forEach(f -> f.completeExceptionally(new IOException("Client closed")));
@@ -200,6 +335,9 @@ public class WebSocketApiClient implements AutoCloseable {
       return request_id;
     }
   }
+
+  private record AuthorizationResponse(
+      String request_id, String reason, JsonElement payload, String error) {}
 
   private static final class LocalDateTimeAdapter
       implements com.google.gson.JsonSerializer<LocalDateTime>,

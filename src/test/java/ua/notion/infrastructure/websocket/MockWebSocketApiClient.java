@@ -51,6 +51,30 @@ public class MockWebSocketApiClient extends WebSocketApiClient {
   }
 
   @Override
+  public AuthSession registerAccount(String username, String email, String password) {
+    User user =
+        send(
+            "create",
+            "user",
+            Map.of("username", username, "email", email, "password", password),
+            User.class);
+    String token = "mock-token-" + user.getId();
+    setAuthToken(token);
+    return new AuthSession(token, "mock-public-key", user);
+  }
+
+  @Override
+  public AuthSession loginAccount(String identifier, String password) {
+    Map<String, String> payload =
+        ua.notion.domain.service.auth.WebSocketAuthenticationService.buildLoginPayload(
+            identifier, password);
+    User user = send("login", "user", payload, User.class);
+    String token = "mock-token-" + user.getId();
+    setAuthToken(token);
+    return new AuthSession(token, "mock-public-key", user);
+  }
+
+  @Override
   public synchronized CompletableFuture<Void> connectAsync() {
     return CompletableFuture.completedFuture(null);
   }
