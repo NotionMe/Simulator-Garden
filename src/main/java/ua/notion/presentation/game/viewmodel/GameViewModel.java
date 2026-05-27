@@ -32,7 +32,7 @@ public class GameViewModel {
       int mapWidth,
       int mapHeight) {
     this.tileMap = new TileMap(mapWidth, mapHeight);
-    this.player = new Player(10, 10);
+    this.player = new Player(9, 11);
     this.keyboardHandler = new KeyboardHandler();
     this.plantManager = new PlantManager(tileMap.getOrthoCoords());
     ServerBackedInventory sharedInventory =
@@ -96,7 +96,7 @@ public class GameViewModel {
     HarvestResult result = plantManager.tryHarvest(bedAnchorCol, bedAnchorRow, playerInventory);
     lastHarvestMessage =
         switch (result) {
-          case SUCCESS -> buildHarvestSuccessMessage(cropType);
+          case SUCCESS -> buildHarvestSuccessMessage(cropType, plantManager.getLastHarvestAmount());
           case NOT_READY -> "Not ripe yet";
           case WITHERED_GONE -> "Crop wilted away";
           case NO_PLANT -> "";
@@ -104,12 +104,20 @@ public class GameViewModel {
     return result;
   }
 
-  private String buildHarvestSuccessMessage(PlantType type) {
+  private String buildHarvestSuccessMessage(PlantType type, int amount) {
     if (type == null) {
       return "Added to inventory";
     }
     String name = type.name().charAt(0) + type.name().substring(1).toLowerCase();
-    return "+" + name + " → inventory (" + playerInventory.getTotalCount() + " total)";
+    String bonusSuffix = amount > 1 ? " (x" + amount + " Combo!)" : "";
+    return "+"
+        + amount
+        + " "
+        + name
+        + bonusSuffix
+        + " → inventory ("
+        + playerInventory.getTotalCount()
+        + " total)";
   }
 
   public String getLastHarvestMessage() {

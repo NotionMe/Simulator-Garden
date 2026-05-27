@@ -104,12 +104,16 @@ public class MenuController {
   @FXML
   private void handleShop() {
     navigateWithInjector(
-        "/fxml/plants.fxml",
-        "Garden Simulator - Plant Catalog",
+        "/fxml/shop.fxml",
+        "Garden Simulator - Shop",
         (loader, injector) -> {
+          var inventoryService =
+              injector.getInstance(ua.notion.domain.service.PlayerInventoryItemService.class);
+          var plantTypes =
+              injector.getInstance(ua.notion.presentation.game.catalog.PlantTypeResolver.class);
           var viewModel =
-              injector.getInstance(ua.notion.presentation.viewmodel.PlantCatalogViewModel.class);
-          var controller = new PlantCatalogController(viewModel);
+              new ua.notion.presentation.viewmodel.ShopViewModel(inventoryService, plantTypes);
+          var controller = new ShopController(viewModel);
           loader.setController(controller);
           return controller;
         });
@@ -180,6 +184,8 @@ public class MenuController {
         g.setCurrentUser(currentUser);
       } else if (controller instanceof PlantCatalogController p) {
         p.setCurrentUser(currentUser);
+      } else if (controller instanceof ShopController s) {
+        s.setCurrentUser(currentUser);
       } else if (controller instanceof AchievementController a) {
         a.setCurrentUser(currentUser);
       } else if (controller instanceof TaskManagementController t) {

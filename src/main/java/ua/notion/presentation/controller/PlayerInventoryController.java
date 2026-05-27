@@ -6,8 +6,10 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -18,8 +20,9 @@ import ua.notion.presentation.viewmodel.ServerBackedInventory.InventoryEntry;
 
 public class PlayerInventoryController {
 
-  @FXML private Pane overlayRoot;
+  @FXML private AnchorPane overlayRoot;
   @FXML private VBox inventoryPanel;
+  @FXML private ScrollPane itemsScroll;
   @FXML private FlowPane itemsFlow;
   @FXML private VBox emptyState;
   @FXML private Label totalLabel;
@@ -38,25 +41,29 @@ public class PlayerInventoryController {
     var items = viewModel.getAllItems();
 
     if (items.isEmpty()) {
-      itemsFlow.setVisible(false);
-      itemsFlow.setManaged(false);
+      if (itemsScroll != null) {
+        itemsScroll.setVisible(false);
+        itemsScroll.setManaged(false);
+      }
       emptyState.setVisible(true);
       emptyState.setManaged(true);
-      totalLabel.setText("0 items");
+      totalLabel.setText("0");
       return;
     }
 
     emptyState.setVisible(false);
     emptyState.setManaged(false);
-    itemsFlow.setVisible(true);
-    itemsFlow.setManaged(true);
+    if (itemsScroll != null) {
+      itemsScroll.setVisible(true);
+      itemsScroll.setManaged(true);
+    }
 
     int total = 0;
     for (InventoryEntry entry : items) {
       total += entry.getCount();
       itemsFlow.getChildren().add(createSlot(entry));
     }
-    totalLabel.setText(total + (total == 1 ? " item" : " items"));
+    totalLabel.setText(String.valueOf(total));
   }
 
   private StackPane createSlot(InventoryEntry entry) {
@@ -64,26 +71,18 @@ public class PlayerInventoryController {
     slot.getStyleClass().add("inventory-slot");
     slot.setAlignment(Pos.CENTER);
 
-    VBox content = new VBox(2);
-    content.setAlignment(Pos.CENTER);
-
     ImageView icon = new ImageView(PlantIconCache.getHarvestIcon(entry.getPlantType()));
     icon.getStyleClass().add("inventory-slot-icon");
 
-    Label name = new Label(entry.getDisplayName());
-    name.getStyleClass().add("inventory-slot-name");
-
-    content.getChildren().addAll(icon, name);
-
-    Label count = new Label("×" + entry.getCount());
+    Label count = new Label(String.valueOf(entry.getCount()));
     count.getStyleClass().add("inventory-slot-count");
     StackPane.setAlignment(count, Pos.TOP_RIGHT);
 
-    entry.countProperty().addListener((obs, o, n) -> count.setText("×" + n));
+    entry.countProperty().addListener((obs, o, n) -> count.setText(String.valueOf(n.intValue())));
 
     Tooltip.install(slot, new Tooltip(entry.getDisplayName() + " ×" + entry.getCount()));
 
-    slot.getChildren().addAll(content, count);
+    slot.getChildren().addAll(icon, count);
     return slot;
   }
 
@@ -94,7 +93,7 @@ public class PlayerInventoryController {
     }
     if (overlayRoot.getParent() instanceof Pane parent) {
       parent.getChildren().remove(overlayRoot);
-    } else if (overlayRoot.getParent() instanceof StackPane stack) {
+    } else if (overlayRoot.getParent() instanceof javafx.scene.layout.StackPane stack) {
       stack.getChildren().remove(overlayRoot);
     }
     if (onCloseCallback != null) {
@@ -119,7 +118,7 @@ public class PlayerInventoryController {
       FXMLLoader loader =
           new FXMLLoader(
               PlayerInventoryController.class.getResource("/fxml/player_inventory.fxml"));
-      Pane overlay = loader.load();
+      AnchorPane overlay = loader.load();
       overlay
           .getStylesheets()
           .add(

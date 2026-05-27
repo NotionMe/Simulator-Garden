@@ -2,6 +2,7 @@ package ua.notion.presentation.game.catalog;
 
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import ua.notion.domain.entity.Plant;
@@ -43,6 +44,11 @@ public class PlantTypeResolver {
   public int requirePlantId(PlantType plantType) {
     return toPlantId(plantType)
         .orElseThrow(() -> new IllegalStateException("No server plant for type: " + plantType));
+  }
+
+  public List<PlantType> registeredPlantTypes() {
+    ensureLoaded();
+    return byPlantType.keySet().stream().sorted().toList();
   }
 
   private void register(Integer plantId, PlantType type) {

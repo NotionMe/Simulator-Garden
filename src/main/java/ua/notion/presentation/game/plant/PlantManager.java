@@ -36,19 +36,39 @@ public class PlantManager {
     }
   }
 
+  private int lastHarvestAmount = 0;
+
+  public int getLastHarvestAmount() {
+    return lastHarvestAmount;
+  }
+
   public HarvestResult tryHarvest(int tileX, int tileY, PlayerInventoryViewModel inventory) {
     PlantSprite plant = getPlantAt(tileX, tileY);
     if (plant == null) {
+      lastHarvestAmount = 0;
       return HarvestResult.NO_PLANT;
     }
     if (plant.isWithering() || plant.isRemoved()) {
+      lastHarvestAmount = 0;
       return HarvestResult.WITHERED_GONE;
     }
     if (!plant.isReadyToHarvest()) {
+      lastHarvestAmount = 0;
       return HarvestResult.NOT_READY;
     }
 
-    inventory.addItem(plant.getPlantType(), 1);
+    double roll = Math.random();
+    int amount;
+    if (roll < 0.10) {
+      amount = 4;
+    } else if (roll < 0.35) {
+      amount = 2;
+    } else {
+      amount = 1;
+    }
+    lastHarvestAmount = amount;
+
+    inventory.addItem(plant.getPlantType(), amount);
     plants.remove(plant);
     return HarvestResult.SUCCESS;
   }

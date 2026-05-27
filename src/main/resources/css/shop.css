@@ -1,0 +1,93 @@
+.shop-root {
+    -fx-background-color: #eef7e8;
+}
+
+.top-bar {
+    -fx-background-color: rgba(255, 255, 255, 0.72);
+    -fx-border-color: rgba(72, 122, 45, 0.28);
+    -fx-border-width: 0 0 1 0;
+}
+
+.primary-button,
+.secondary-button {
+    -fx-cursor: hand;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 7 16;
+    -fx-font-weight: bold;
+}
+
+.primary-button {
+    -fx-background-color: #4f9b45;
+    -fx-text-fill: white;
+}
+
+.primary-button:disabled {
+    -fx-opacity: 0.45;
+}
+
+.secondary-button {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #7cac5e;
+    -fx-text-fill: #2d5016;
+}
+
+.shop-coins {
+    -fx-background-color: #fff4ba;
+    -fx-border-color: #d2a33b;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 7 12;
+    -fx-font-weight: bold;
+    -fx-text-fill: #6b4d08;
+}
+
+.shop-status {
+    -fx-text-fill: #4a7c2c;
+    -fx-font-weight: bold;
+}
+
+.shop-tabs {
+    -fx-background-color: transparent;
+}
+
+.shop-scroll,
+.shop-flow {
+    -fx-background-color: transparent;
+}
+
+.shop-card {
+    -fx-background-color: rgba(255, 255, 255, 0.92);
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: rgba(72, 122, 45, 0.35);
+    -fx-padding: 14;
+}
+
+.shop-card:hover {
+    -fx-effect: dropshadow(gaussian, rgba(45, 80, 22, 0.22), 12, 0.25, 0, 4);
+}
+
+.shop-item-title {
+    -fx-font-weight: bold;
+    -fx-text-fill: #2d5016;
+}
+
+.shop-owned {
+    -fx-text-fill: #4a7c2c;
+}
+
+.shop-price {
+    -fx-text-fill: #6b4d08;
+    -fx-font-weight: bold;
+}
+
+.shop-empty-title {
+    -fx-font-size: 18;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2d5016;
+}
+
+.shop-empty-sub {
+    -fx-text-fill: #4a7c2c;
+}

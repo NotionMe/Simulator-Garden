@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            stylesheets="@../css/shop.css"
+            styleClass="shop-root">
+
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="18" styleClass="top-bar">
+            <padding>
+                <Insets top="18" bottom="18" left="28" right="28"/>
+            </padding>
+            <Button fx:id="backButton" onAction="#handleBack" text="Back" styleClass="secondary-button"/>
+            <Label text="Shop" styleClass="title-label">
+                <font>
+                    <Font name="System Bold" size="32"/>
+                </font>
+            </Label>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="statusLabel" styleClass="shop-status"/>
+            <Label fx:id="coinsLabel" styleClass="shop-coins"/>
+        </HBox>
+    </top>
+
+    <center>
+        <TabPane tabClosingPolicy="UNAVAILABLE" styleClass="shop-tabs">
+            <tabs>
+                <Tab text="Buy">
+                    <ScrollPane fx:id="buyScroll" fitToWidth="true" hbarPolicy="NEVER"
+                                vbarPolicy="AS_NEEDED" pannable="true" styleClass="shop-scroll">
+                        <content>
+                            <FlowPane fx:id="buyFlow" hgap="14" vgap="14" styleClass="shop-flow">
+                                <padding>
+                                    <Insets top="20" bottom="20" left="24" right="24"/>
+                                </padding>
+                            </FlowPane>
+                        </content>
+                    </ScrollPane>
+                </Tab>
+                <Tab text="Sell">
+                    <StackPane>
+                        <ScrollPane fx:id="sellScroll" fitToWidth="true" hbarPolicy="NEVER"
+                                    vbarPolicy="AS_NEEDED" pannable="true" styleClass="shop-scroll">
+                            <content>
+                                <FlowPane fx:id="sellFlow" hgap="14" vgap="14" styleClass="shop-flow">
+                                    <padding>
+                                        <Insets top="20" bottom="20" left="24" right="24"/>
+                                    </padding>
+                                </FlowPane>
+                            </content>
+                        </ScrollPane>
+                        <VBox fx:id="emptySellState" alignment="CENTER" spacing="8"
+                              visible="false" managed="false" styleClass="shop-empty">
+                            <Label text="Nothing to sell" styleClass="shop-empty-title"/>
+                            <Label text="Harvest crops or buy items first" styleClass="shop-empty-sub"/>
+                        </VBox>
+                    </StackPane>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </center>
+</BorderPane>

@@ -35,6 +35,8 @@ public class GameScene {
 
   private Pane inventoryOverlay;
   private PlayerInventoryController inventoryController;
+  private Runnable onEscapeToMenu;
+  private Runnable onOpenShop;
 
   public GameScene(
       int userId,
@@ -58,8 +60,7 @@ public class GameScene {
         event -> {
           viewModel.getKeyboardHandler().handleKeyPressed(event);
           if (event.getCode() == KeyCode.ESCAPE) {
-            closeSeedPicker();
-            closeInventory();
+            handleEscape();
           } else if (event.getCode() == KeyCode.I) {
             toggleInventory();
           }
@@ -89,6 +90,11 @@ public class GameScene {
         int tileId = getTileId(col, row);
         System.out.println("Tile ID: " + tileId);
 
+        if (viewModel.getTileMap().isShopTile(col, row)) {
+          openShop();
+          return;
+        }
+
         if (seedPickerOverlay != null) {
           if (GardenTileAtlas.isGardenBed(tileId)) {
             pendingBedCol = col;
@@ -110,17 +116,50 @@ public class GameScene {
     }
   }
 
+  private void handleEscape() {
+    if (seedPickerOverlay != null || inventoryOverlay != null) {
+      closeSeedPicker();
+      closeInventory();
+      return;
+    }
+    if (onEscapeToMenu != null) {
+      onEscapeToMenu.run();
+    }
+  }
+
+  private void openShop() {
+    closeSeedPicker();
+    closeInventory();
+    if (onOpenShop != null) {
+      onOpenShop.run();
+    }
+  }
+
   private double getCameraOffsetX() {
-    return canvas.getWidth() / 2.0 - (viewModel.getPlayer().getX() + 24.0);
+    double scale = getViewportScale();
+    double mapWidth = viewModel.getTileMap().getWidth() * 48.0;
+    return (canvas.getWidth() - mapWidth * scale) / (2.0 * scale);
   }
 
   private double getCameraOffsetY() {
-    return canvas.getHeight() / 2.0 - (viewModel.getPlayer().getY() + 24.0);
+    double scale = getViewportScale();
+    double mapHeight = viewModel.getTileMap().getHeight() * 48.0;
+    return (canvas.getHeight() - mapHeight * scale) / (2.0 * scale);
+  }
+
+  private double getViewportScale() {
+    double mapWidth = viewModel.getTileMap().getWidth() * 48.0;
+    double mapHeight = viewModel.getTileMap().getHeight() * 48.0;
+    double availableWidth = Math.max(1.0, canvas.getWidth());
+    double availableHeight = Math.max(1.0, canvas.getHeight());
+    return Math.min(
+        1.0, Math.max(0.1, Math.min(availableWidth / mapWidth, availableHeight / mapHeight)));
   }
 
   private int[] screenToTile(double screenX, double screenY) {
-    double adjustedX = screenX - getCameraOffsetX();
-    double adjustedY = screenY - getCameraOffsetY();
+    double scale = getViewportScale();
+    double adjustedX = screenX / scale - getCameraOffsetX();
+    double adjustedY = screenY / scale - getCameraOffsetY();
 
     var orthoCoords = viewModel.getTileMap().getOrthoCoords();
     int col = orthoCoords.toGridCol(adjustedX, adjustedY);
@@ -170,9 +209,28 @@ public class GameScene {
     }
 
     seedPickerOverlay = overlay;
+    bindOverlayToStack(overlay, stack);
     stack.getChildren().add(overlay);
     startUiOverlayTimer();
     updateSeedPickerPosition();
+  }
+
+  private void bindOverlayToStack(Pane overlay, StackPane stack) {
+    overlay.prefWidthProperty().bind(stack.widthProperty());
+    overlay.prefHeightProperty().bind(stack.heightProperty());
+    overlay.minWidthProperty().bind(stack.widthProperty());
+    overlay.minHeightProperty().bind(stack.heightProperty());
+    overlay.maxWidthProperty().bind(stack.widthProperty());
+    overlay.maxHeightProperty().bind(stack.heightProperty());
+  }
+
+  private void unbindOverlay(Pane overlay) {
+    overlay.prefWidthProperty().unbind();
+    overlay.prefHeightProperty().unbind();
+    overlay.minWidthProperty().unbind();
+    overlay.minHeightProperty().unbind();
+    overlay.maxWidthProperty().unbind();
+    overlay.maxHeightProperty().unbind();
   }
 
   private void plantOnPendingBed(
@@ -198,6 +256,9 @@ public class GameScene {
   }
 
   private void onSeedPickerClosed() {
+    if (seedPickerOverlay != null) {
+      unbindOverlay(seedPickerOverlay);
+    }
     seedPickerController = null;
     seedPickerOverlay = null;
     pendingBedCol = -1;
@@ -224,9 +285,6 @@ public class GameScene {
             if (seedPickerController != null) {
               updateSeedPickerPosition();
             }
-            if (inventoryController != null) {
-              positionInventoryPanel();
-            }
           }
         };
     uiOverlayTimer.start();
@@ -241,6 +299,9 @@ public class GameScene {
 
   private void updateSeedPickerPosition() {
     if (seedPickerController == null || seedPickerOverlay == null) {
+      return;
+    }
+    if (!(canvas.getParent() instanceof StackPane stack)) {
       return;
     }
 
@@ -259,14 +320,19 @@ public class GameScene {
       panelH = panel.prefHeight(-1);
     }
 
-    double playerCenterX = viewModel.getPlayer().getX() + getCameraOffsetX() + 24.0;
-    double playerTopY = viewModel.getPlayer().getY() + getCameraOffsetY();
+    double viewportScale = getViewportScale();
+    double playerCenterCanvasX =
+        (viewModel.getPlayer().getX() + getCameraOffsetX() + 24.0) * viewportScale;
+    double playerTopCanvasY = (viewModel.getPlayer().getY() + getCameraOffsetY()) * viewportScale;
 
-    double x = playerCenterX - panelW / 2.0;
-    double y = playerTopY - panelH - 14.0;
+    var playerOnScreen = canvas.localToScene(playerCenterCanvasX, playerTopCanvasY);
+    var panelOrigin = stack.sceneToLocal(playerOnScreen);
 
-    x = Math.max(8.0, Math.min(x, canvas.getWidth() - panelW - 8.0));
-    y = Math.max(8.0, y);
+    double x = panelOrigin.getX() - panelW / 2.0;
+    double y = panelOrigin.getY() - panelH - 12.0;
+
+    x = Math.max(8.0, Math.min(x, stack.getWidth() - panelW - 8.0));
+    y = Math.max(8.0, Math.min(y, stack.getHeight() - panelH - 8.0));
 
     panel.setLayoutX(x);
     panel.setLayoutY(y);
@@ -297,12 +363,14 @@ public class GameScene {
     }
 
     inventoryOverlay = overlay;
+    bindOverlayToStack(overlay, stack);
     stack.getChildren().add(overlay);
-    startUiOverlayTimer();
-    positionInventoryPanel();
   }
 
   private void onInventoryClosed() {
+    if (inventoryOverlay != null) {
+      unbindOverlay(inventoryOverlay);
+    }
     inventoryOverlay = null;
     inventoryController = null;
     stopUiOverlayTimerIfIdle();
@@ -310,6 +378,7 @@ public class GameScene {
 
   private void closeInventory() {
     if (inventoryOverlay != null && canvas.getParent() instanceof StackPane stack) {
+      unbindOverlay(inventoryOverlay);
       stack.getChildren().remove(inventoryOverlay);
     }
     if (inventoryController != null) {
@@ -317,24 +386,6 @@ public class GameScene {
     } else {
       onInventoryClosed();
     }
-  }
-
-  private void positionInventoryPanel() {
-    if (inventoryController == null || inventoryOverlay == null) {
-      return;
-    }
-
-    var panel = inventoryController.getInventoryPanel();
-    inventoryOverlay.applyCss();
-    inventoryOverlay.layout();
-    panel.applyCss();
-    panel.autosize();
-
-    double panelW = panel.getWidth() > 0 ? panel.getWidth() : panel.prefWidth(-1);
-    double panelH = panel.getHeight() > 0 ? panel.getHeight() : panel.prefHeight(-1);
-
-    panel.setLayoutX(canvas.getWidth() - panelW - 16);
-    panel.setLayoutY(canvas.getHeight() - panelH - 16);
   }
 
   public void initialize() {
@@ -434,7 +485,10 @@ public class GameScene {
   private void renderGame() {
     double offsetX = getCameraOffsetX();
     double offsetY = getCameraOffsetY();
+    double viewportScale = getViewportScale();
 
+    gc.save();
+    gc.scale(viewportScale, viewportScale);
     viewModel.getTileMap().render(gc, offsetX, offsetY);
 
     class DepthRenderable {
@@ -448,6 +502,13 @@ public class GameScene {
     }
 
     List<DepthRenderable> renderQueue = new ArrayList<>();
+
+    for (var decoration : viewModel.getTileMap().getTallDecorations()) {
+      renderQueue.add(
+          new DepthRenderable(
+              decoration.getSortY(),
+              () -> decoration.render(gc, Math.round(offsetX), Math.round(offsetY))));
+    }
 
     // Add plants to the queue
     for (var plant : viewModel.getPlantManager().getAllPlants()) {
@@ -492,6 +553,7 @@ public class GameScene {
     for (DepthRenderable renderable : renderQueue) {
       renderable.renderAction.run();
     }
+    gc.restore();
   }
 
   private void renderUI() {
@@ -500,7 +562,10 @@ public class GameScene {
     gc.setLineWidth(2);
     gc.strokeText("FPS: " + gameLoop.getFps(), 10, 20);
     gc.fillText("FPS: " + gameLoop.getFps(), 10, 20);
-    gc.fillText("WASD move · bed: plant/harvest · I inventory · G grow (debug)", 10, 40);
+    gc.fillText(
+        "WASD move · bed: plant/harvest · shop bench: click · I inventory · Esc menu · G grow",
+        10,
+        40);
     int total = viewModel.getPlayerInventory().getTotalCount();
     gc.fillText("Inventory: " + total + (total == 1 ? " item" : " items"), 10, 58);
 
@@ -514,5 +579,13 @@ public class GameScene {
 
   public Canvas getCanvas() {
     return canvas;
+  }
+
+  public void setOnEscapeToMenu(Runnable onEscapeToMenu) {
+    this.onEscapeToMenu = onEscapeToMenu;
+  }
+
+  public void setOnOpenShop(Runnable onOpenShop) {
+    this.onOpenShop = onOpenShop;
   }
 }

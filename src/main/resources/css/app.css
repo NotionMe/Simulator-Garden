@@ -62,12 +62,12 @@
 }
 
 .game-root {
-    -fx-background-color: black;
+    -fx-background-color: #7ec8e3;
     -fx-alignment: center;
 }
 
 .game-container {
-    -fx-background-color: black;
+    -fx-background-color: #7ec8e3;
     -fx-alignment: center;
 }
 

@@ -1,8 +1,12 @@
 package ua.notion.presentation.controller;
 
+import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import ua.notion.domain.entity.User;
 import ua.notion.domain.service.PlayerInventoryItemService;
 import ua.notion.infrastructure.config.AppInjector;
@@ -17,16 +21,20 @@ public class GameController {
 
   private GameScene gameScene;
   private User currentUser;
+  private PauseTransition resizeDebounce;
 
   @FXML
   public void initialize() {
-    gameContainer.widthProperty().addListener((obs, oldW, newW) -> resizeCanvas());
-    gameContainer.heightProperty().addListener((obs, oldH, newH) -> resizeCanvas());
+    resizeDebounce = new PauseTransition(Duration.millis(50));
+    resizeDebounce.setOnFinished(e -> layoutCanvas());
+
+    gameContainer.widthProperty().addListener((obs, oldW, newW) -> scheduleLayout());
+    gameContainer.heightProperty().addListener((obs, oldH, newH) -> scheduleLayout());
     gameRoot
         .sceneProperty()
         .addListener(
             (obs, oldScene, newScene) -> {
-              resizeCanvas();
+              layoutCanvas();
               if (newScene != null) {
                 SceneCoordinator.of((Stage) newScene.getWindow())
                     .setOnContentDispose(this::shutdown);
@@ -51,29 +59,42 @@ public class GameController {
     PlantTypeResolver plantTypes = injector.getInstance(PlantTypeResolver.class);
 
     gameScene = new GameScene(currentUser.getId(), inventoryService, plantTypes);
+    gameScene.setOnEscapeToMenu(this::returnToMenu);
+    gameScene.setOnOpenShop(this::openShop);
     gameScene.initialize();
 
-    gameContainer.getChildren().add(gameScene.getCanvas());
-    gameScene.getCanvas().setWidth(1);
-    gameScene.getCanvas().setHeight(1);
+    var canvas = gameScene.getCanvas();
+    gameContainer.getChildren().add(canvas);
 
-    resizeCanvas();
+    layoutCanvas();
     gameScene.start();
   }
 
-  private void resizeCanvas() {
+  private void scheduleLayout() {
+    resizeDebounce.playFromStart();
+  }
+
+  private void layoutCanvas() {
     if (gameScene == null || gameContainer == null) {
       return;
     }
-    double w = gameContainer.getWidth();
-    double h = gameContainer.getHeight();
-    if (w <= 0 || h <= 0) {
+    double width = gameContainer.getWidth();
+    double height = gameContainer.getHeight();
+    if (width <= 0 || height <= 0) {
       return;
     }
+
     var canvas = gameScene.getCanvas();
-    if (Math.abs(canvas.getWidth() - w) > 0.5 || Math.abs(canvas.getHeight() - h) > 0.5) {
-      canvas.setWidth(w);
-      canvas.setHeight(h);
+    canvas.setScaleX(1);
+    canvas.setScaleY(1);
+    canvas.setTranslateX(0);
+    canvas.setTranslateY(0);
+
+    if (Math.abs(canvas.getWidth() - width) > 0.5) {
+      canvas.setWidth(width);
+    }
+    if (Math.abs(canvas.getHeight() - height) > 0.5) {
+      canvas.setHeight(height);
     }
   }
 
@@ -81,6 +102,38 @@ public class GameController {
     if (gameScene != null) {
       gameScene.stop();
       gameScene = null;
+    }
+  }
+
+  private void returnToMenu() {
+    try {
+      shutdown();
+      SceneCoordinator.forNode(gameRoot).navigateToMenu(currentUser);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void openShop() {
+    try {
+      shutdown();
+      var injector = AppInjector.get();
+      FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/shop.fxml"));
+      var inventoryService = injector.getInstance(PlayerInventoryItemService.class);
+      var plantTypes = injector.getInstance(PlantTypeResolver.class);
+      var viewModel =
+          new ua.notion.presentation.viewmodel.ShopViewModel(inventoryService, plantTypes);
+      var controller = new ShopController(viewModel);
+      loader.setController(controller);
+      Parent root = loader.load();
+      controller.setCurrentUser(currentUser);
+
+      SceneCoordinator coordinator = SceneCoordinator.forNode(gameRoot);
+      coordinator.setContent(root);
+      coordinator.addStylesheet("/css/menu.css");
+      coordinator.getStage().setTitle("Garden Simulator - Shop");
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 }
