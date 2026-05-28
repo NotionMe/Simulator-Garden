@@ -92,7 +92,7 @@ jobs:
               --vendor "Notion" \
               --input jpackage-input/ \
               --main-jar garden-simulator-1.0.0-jar-with-dependencies.jar \
-              --main-class ua.notion.presentation.GardenSimulatorApp \
+              --main-class ua.notion.Launcher \
               --icon packaging/macos/garden-simulator.icns \
               --dest dist/
           else
@@ -103,7 +103,7 @@ jobs:
               --vendor "Notion" \
               --input jpackage-input/ \
               --main-jar garden-simulator-1.0.0-jar-with-dependencies.jar \
-              --main-class ua.notion.presentation.GardenSimulatorApp \
+              --main-class ua.notion.Launcher \
               --dest dist/
           fi
 
@@ -111,7 +111,9 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           ICON_FLAG=""
-          if [ -f "packaging/linux/garden-simulator.png" ]; then
+          if [ -f "packaging/linux/garden-simulator.svg" ]; then
+            ICON_FLAG="--icon packaging/linux/garden-simulator.svg"
+          elif [ -f "packaging/linux/garden-simulator.png" ]; then
             ICON_FLAG="--icon packaging/linux/garden-simulator.png"
           fi
 
@@ -122,7 +124,7 @@ jobs:
             --vendor "Notion" \
             --input jpackage-input/ \
             --main-jar garden-simulator-1.0.0-jar-with-dependencies.jar \
-            --main-class ua.notion.presentation.GardenSimulatorApp \
+            --main-class ua.notion.Launcher \
             $ICON_FLAG \
             --dest dist/ \
             --linux-shortcut
@@ -134,7 +136,7 @@ jobs:
             --vendor "Notion" \
             --input jpackage-input/ \
             --main-jar garden-simulator-1.0.0-jar-with-dependencies.jar \
-            --main-class ua.notion.presentation.GardenSimulatorApp \
+            --main-class ua.notion.Launcher \
             $ICON_FLAG \
             --dest dist/ \
             --linux-shortcut
@@ -166,76 +168,52 @@ jobs:
         with:
           name: "Garden Simulator ${{ github.ref_name }}"
           body: |
-            ## 🌱 Garden Simulator - Initial Release
+            ## 🌱 Garden Simulator - Release ${{ github.ref_name }}
 
-            Перший реліз Garden Simulator - симулятора управління садом з JavaFX інтерфейсом.
+            Оновлений реліз Garden Simulator — симулятора управління садом з клієнт-серверною архітектурою.
 
             ### ✨ Основні можливості
 
-            - 🔐 **Автентифікація** - система реєстрації та входу користувачів
-            - 🏡 **Управління садами** - створення та керування власними садами
-            - 🌿 **Каталог рослин** - перегляд та управління рослинами
-            - ✅ **Система завдань** - трекінг задач та прогресу
-            - 🏆 **Досягнення** - система нагород та досягнень
-            - 💾 **SQLite база даних** - локальне зберігання даних з міграціями
-            - 🎨 **Сучасний UI** - JavaFX з AtlantaFX темою
+            - 🔐 **Автентифікація** — система реєстрації та входу через JWT
+            - 🏡 **Управління садами** — створення та керування садами в реальному часі
+            - 🌿 **Каталог рослин** — великий вибір культур з різними параметрами росту
+            - 🛒 **Магазин та інвентар** — купівля насіння та управління ресурсами гравця
+            - ✅ **Система завдань** — щоденні квести та відстеження прогресу
+            - 🏆 **Досягнення** — система нагород за ігрові успіхи
+            - 🌤 **Погодні події** — динамічна зміна погоди, що впливає на ріст рослин
+            - 🎨 **Сучасний UI** — JavaFX з темою AtlantaFX та ігровими асетами
 
             ### 🛠 Технічний стек
 
-            - Java 21
-            - JavaFX 21.0.2
-            - SQLite 3.45.3.0
-            - Google Guice 7.0.0 (Dependency Injection)
-            - MVVM архітектура
-            - Repository pattern з Unit of Work
+            - **Client:** Java 21, JavaFX, Google Guice (DI), WebSockets
+            - **Server:** Rust, Axum, Tokio (Async runtime)
+            - **Database:** PostgreSQL (на стороні сервера)
+            - **Communication:** JSON payloads через HTTP та WebSockets
+            - **Security:** Argon2 (паролі), JWT (авторизація)
 
             ### 📦 Завантаження
 
             | Операційна система | Файл | Опис |
             |---|---|---|
             | 🪟 Windows 10/11 | `*.msi` | MSI інсталятор з ярликами |
-            | 🍎 macOS 12+ | `*.dmg` | DMG образ для drag-and-drop |
+            | 🍎 macOS 12+ | `*.dmg` | DMG образ для інсталяції |
             | 🐧 Ubuntu/Debian | `*.deb` | DEB пакет |
             | 🐧 Fedora/RedHat | `*.rpm` | RPM пакет |
-            | ☕ Будь-яка платформа | `*.jar` | Потрібна JRE 21+ |
+            | ☕ Будь-яка платформа | `*.jar` | Fat JAR (потребує JRE 21+) |
 
-            ### 📝 Встановлення
+            ### 📝 Встановлення та запуск
 
-            **Windows:**
-            ```bash
-            # Завантажте .msi файл та запустіть інсталятор
-            ```
+            **Windows/macOS:** Запустіть завантажений файл та дотримуйтесь інструкцій.
+            **Linux:** Скористайтеся менеджером пакетів (`dpkg -i` або `rpm -i`).
+            **Universal JAR:** `java -jar garden-simulator-1.0.0-jar-with-dependencies.jar`
 
-            **macOS:**
-            ```bash
-            # Відкрийте .dmg та перетягніть додаток у Applications
-            ```
-
-            **Linux (Ubuntu/Debian):**
-            ```bash
-            sudo dpkg -i garden-simulator_*.deb
-            ```
-
-            **Linux (Fedora/RedHat):**
-            ```bash
-            sudo rpm -i garden-simulator-*.rpm
-            ```
-
-            **Universal JAR:**
-            ```bash
-            java -jar garden-simulator-*-jar-with-dependencies.jar
-            ```
-
-            ### 🐛 Відомі проблеми
-
-            Поки що не виявлено.
+            > **Примітка:** Для роботи клієнта необхідний запущений сервер Garden Simulator.
 
             ### 🚀 Плани на майбутнє
 
-            - Ігрова механіка та симуляція росту рослин
-            - Система погоди
-            - Мультиплеєр підтримка
-            - Більше типів рослин та садів
+            - Покращення ігрової механіки симуляції
+            - Мультиплеєрні режими
+            - Мобільна версія клієнта
           files: installers/**
           draft: false
           prerelease: false
