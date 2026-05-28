@@ -12,6 +12,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import ua.notion.infrastructure.async.AsyncExecutor;
+import ua.notion.presentation.achievement.AchievementAwarder;
 import ua.notion.presentation.controller.PlayerInventoryController;
 import ua.notion.presentation.controller.SeedPlantingModalController;
 import ua.notion.presentation.game.assets.GardenTileAtlas;
@@ -19,9 +20,11 @@ import ua.notion.presentation.game.plant.HarvestResult;
 import ua.notion.presentation.game.viewmodel.GameViewModel;
 
 public class GameScene {
+
   private final Canvas canvas;
   private final GraphicsContext gc;
   private final GameViewModel viewModel;
+  private final AchievementAwarder achievements;
   private GameLoop gameLoop;
   private Image backgroundImage;
   private boolean isLoading = true;
@@ -32,6 +35,8 @@ public class GameScene {
   private int pendingBedCol = -1;
   private int pendingBedRow = -1;
   private int harvestMessageTicks;
+  private String achievementMessage = "";
+  private int achievementMessageTicks;
 
   private Pane inventoryOverlay;
   private PlayerInventoryController inventoryController;
@@ -41,9 +46,12 @@ public class GameScene {
   public GameScene(
       int userId,
       ua.notion.domain.service.PlayerInventoryItemService inventoryService,
-      ua.notion.presentation.game.catalog.PlantTypeResolver plantTypes) {
+      ua.notion.presentation.game.catalog.PlantTypeResolver plantTypes,
+      AchievementAwarder achievements) {
     this.canvas = new Canvas(GameConstants.CANVAS_WIDTH, GameConstants.CANVAS_HEIGHT);
     this.gc = canvas.getGraphicsContext2D();
+    this.achievements = achievements;
+    this.achievements.setNotificationHandler(this::showAchievementMessage);
     this.viewModel =
         new GameViewModel(
             userId,
@@ -63,6 +71,10 @@ public class GameScene {
             handleEscape();
           } else if (event.getCode() == KeyCode.I) {
             toggleInventory();
+          } else if (event.getCode() == KeyCode.G) {
+            achievements.debugGrowthUsed();
+          } else if (event.getCode() == KeyCode.K) {
+            viewModel.getWeatherManager().toggleWeatherDebug();
           }
         });
     canvas.setOnKeyReleased(viewModel.getKeyboardHandler()::handleKeyReleased);
@@ -169,10 +181,10 @@ public class GameScene {
   }
 
   private boolean isValidTile(int col, int row) {
-    return col >= 0
+    return (col >= 0
         && col < viewModel.getTileMap().getWidth()
         && row >= 0
-        && row < viewModel.getTileMap().getHeight();
+        && row < viewModel.getTileMap().getHeight());
   }
 
   private int getTileId(int col, int row) {
@@ -180,6 +192,7 @@ public class GameScene {
   }
 
   private boolean tryHarvestOnBed(int anchorCol, int anchorRow) {
+    var plant = viewModel.getPlantManager().getPlantAt(anchorCol, anchorRow);
     HarvestResult result = viewModel.tryHarvestAt(anchorCol, anchorRow);
     if (result == HarvestResult.NO_PLANT) {
       return false;
@@ -187,6 +200,10 @@ public class GameScene {
     harvestMessageTicks = 180;
     if (result == HarvestResult.SUCCESS && inventoryController != null) {
       inventoryController.refresh();
+    }
+    if (result == HarvestResult.SUCCESS && plant != null) {
+      achievements.cropHarvested(
+          plant.getPlantType(), viewModel.getPlayerInventory().getTotalCount());
     }
     System.out.println(viewModel.getLastHarvestMessage());
     return true;
@@ -252,6 +269,7 @@ public class GameScene {
       seedPickerController.refresh();
     }
     viewModel.getPlantManager().plantSeed(plantType, anchor[0], anchor[1]);
+    achievements.seedPlanted(plantType);
     System.out.println("Planted " + plantType + " at bed (" + anchor[0] + ", " + anchor[1] + ")");
   }
 
@@ -365,6 +383,7 @@ public class GameScene {
     inventoryOverlay = overlay;
     bindOverlayToStack(overlay, stack);
     stack.getChildren().add(overlay);
+    achievements.inventoryOpened();
   }
 
   private void onInventoryClosed() {
@@ -404,15 +423,18 @@ public class GameScene {
             () -> {
               AsyncExecutor.runOnUIThread(
                   () -> {
-                    viewModel
-                        .getTileMap()
-                        .addTestPlants(
-                            viewModel.getPlantManager(),
-                            ua.notion.presentation.game.assets.PlantBasesAtlas.PlantType.TOMATO);
+                    if (viewModel.getPlantManager().getAllPlants().isEmpty()) {
+                      viewModel
+                          .getTileMap()
+                          .addTestPlants(
+                              viewModel.getPlantManager(),
+                              ua.notion.presentation.game.assets.PlantBasesAtlas.PlantType.TOMATO);
+                    }
                     isLoading = false;
                     gameLoop = new GameLoop(this);
                     gameLoop.start();
                     canvas.requestFocus();
+                    achievements.gameEntered();
                     System.out.println("Game scene initialized and started");
                   });
             })
@@ -429,6 +451,7 @@ public class GameScene {
   }
 
   public void stop() {
+    viewModel.saveSession();
     closeSeedPicker();
     closeInventory();
     if (uiOverlayTimer != null) {
@@ -448,6 +471,9 @@ public class GameScene {
     viewModel.update(deltaTime);
     if (harvestMessageTicks > 0) {
       harvestMessageTicks--;
+    }
+    if (achievementMessageTicks > 0) {
+      achievementMessageTicks--;
     }
   }
 
@@ -480,6 +506,29 @@ public class GameScene {
       gc.setFill(Color.BLACK);
       gc.fillRect(0, 0, width, height);
     }
+
+    if (viewModel.getWeatherManager().isRaining()) {
+      renderRain();
+    }
+  }
+
+  private void renderRain() {
+    gc.save();
+    gc.setStroke(Color.color(0.6, 0.7, 1.0, 0.5));
+    gc.setLineWidth(1.5);
+    double width = canvas.getWidth();
+    double height = canvas.getHeight();
+
+    long time = System.currentTimeMillis();
+    for (int i = 0; i < 100; i++) {
+      double x = ((i * 137 + time * 0.5) % width);
+      double y = ((i * 223 + time * 1.2) % height);
+      gc.strokeLine(x, y, x - 2, y + 10);
+    }
+    gc.restore();
+
+    gc.setFill(Color.color(0, 0, 0.2, 0.1));
+    gc.fillRect(0, 0, width, height);
   }
 
   private void renderGame() {
@@ -492,6 +541,7 @@ public class GameScene {
     viewModel.getTileMap().render(gc, offsetX, offsetY);
 
     class DepthRenderable {
+
       final double y;
       final Runnable renderAction;
 
@@ -562,18 +612,32 @@ public class GameScene {
     gc.setLineWidth(2);
     gc.strokeText("FPS: " + gameLoop.getFps(), 10, 20);
     gc.fillText("FPS: " + gameLoop.getFps(), 10, 20);
+
+    String weather = "Weather: " + viewModel.getWeatherManager().getCurrentWeather();
+    Color weatherColor = viewModel.getWeatherManager().isRaining() ? Color.LIGHTBLUE : Color.YELLOW;
+    gc.setFill(weatherColor);
+    gc.strokeText(weather, 10, 40);
+    gc.fillText(weather, 10, 40);
+
+    gc.setFill(Color.WHITE);
     gc.fillText(
-        "WASD move · bed: plant/harvest · shop bench: click · I inventory · Esc menu · G grow",
+        "WASD move · bed: plant/harvest · shop bench: click · I inventory · Esc menu · G grow · K weather",
         10,
-        40);
+        58);
     int total = viewModel.getPlayerInventory().getTotalCount();
-    gc.fillText("Inventory: " + total + (total == 1 ? " item" : " items"), 10, 58);
+    gc.fillText("Inventory: " + total + (total == 1 ? " item" : " items"), 10, 76);
 
     if (harvestMessageTicks > 0) {
       String msg = viewModel.getLastHarvestMessage();
       if (!msg.isEmpty()) {
-        gc.fillText(msg, 10, 76);
+        gc.fillText(msg, 10, 94);
       }
+    }
+    if (achievementMessageTicks > 0 && !achievementMessage.isEmpty()) {
+      gc.setFill(Color.GOLD);
+      gc.setStroke(Color.BLACK);
+      gc.strokeText(achievementMessage, 10, 116);
+      gc.fillText(achievementMessage, 10, 116);
     }
   }
 
@@ -587,5 +651,10 @@ public class GameScene {
 
   public void setOnOpenShop(Runnable onOpenShop) {
     this.onOpenShop = onOpenShop;
+  }
+
+  private void showAchievementMessage(String message) {
+    achievementMessage = message;
+    achievementMessageTicks = 240;
   }
 }

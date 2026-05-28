@@ -47,6 +47,7 @@ public class ShopController {
     this.currentUser = user;
     if (user != null && user.getId() != null) {
       viewModel.setCurrentUserId(user.getId());
+      viewModel.shopVisited();
       refresh();
     }
   }

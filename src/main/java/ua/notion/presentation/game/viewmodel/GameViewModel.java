@@ -9,17 +9,21 @@ import ua.notion.presentation.game.catalog.PlantTypeResolver;
 import ua.notion.presentation.game.entity.Player;
 import ua.notion.presentation.game.input.KeyboardHandler;
 import ua.notion.presentation.game.map.TileMap;
+import ua.notion.presentation.game.persistence.GameSession;
 import ua.notion.presentation.game.plant.HarvestResult;
 import ua.notion.presentation.game.plant.PlantManager;
+import ua.notion.presentation.game.weather.WeatherManager;
 import ua.notion.presentation.viewmodel.PlayerInventoryViewModel;
 import ua.notion.presentation.viewmodel.SeedInventoryViewModel;
 import ua.notion.presentation.viewmodel.ServerBackedInventory;
 
 public class GameViewModel {
+  private final int userId;
   private final TileMap tileMap;
   private final Player player;
   private final KeyboardHandler keyboardHandler;
   private final PlantManager plantManager;
+  private final WeatherManager weatherManager;
   private final SeedInventoryViewModel seedInventory;
   private final PlayerInventoryViewModel playerInventory;
 
@@ -31,10 +35,12 @@ public class GameViewModel {
       PlantTypeResolver plantTypes,
       int mapWidth,
       int mapHeight) {
+    this.userId = userId;
     this.tileMap = new TileMap(mapWidth, mapHeight);
     this.player = new Player(9, 11);
     this.keyboardHandler = new KeyboardHandler();
     this.plantManager = new PlantManager(tileMap.getOrthoCoords());
+    this.weatherManager = new WeatherManager();
     ServerBackedInventory sharedInventory =
         new ServerBackedInventory(userId, inventoryService, plantTypes);
     this.seedInventory = new SeedInventoryViewModel(sharedInventory);
@@ -49,7 +55,15 @@ public class GameViewModel {
                 AsyncExecutor.runAsync(
                     () -> {
                       playerInventory.loadFromServer();
+                      String savedData = GameSession.loadPlants(userId);
+                      if (!savedData.isEmpty()) {
+                        plantManager.deserializePlants(savedData);
+                      }
                     }));
+  }
+
+  public void saveSession() {
+    GameSession.savePlants(userId, plantManager.serializePlants());
   }
 
   public void update(double deltaTime) {
@@ -57,7 +71,8 @@ public class GameViewModel {
       return;
     }
 
-    plantManager.update(deltaTime);
+    weatherManager.update(deltaTime);
+    plantManager.update(deltaTime, weatherManager.getGrowthMultiplier());
 
     if (keyboardHandler.isJustPressed(KeyCode.G)) {
       plantManager.growAllPlants();
@@ -93,7 +108,9 @@ public class GameViewModel {
     var plant = plantManager.getPlantAt(bedAnchorCol, bedAnchorRow);
     PlantType cropType = plant != null && plant.isReadyToHarvest() ? plant.getPlantType() : null;
 
-    HarvestResult result = plantManager.tryHarvest(bedAnchorCol, bedAnchorRow, playerInventory);
+    HarvestResult result =
+        plantManager.tryHarvest(
+            bedAnchorCol, bedAnchorRow, playerInventory, weatherManager.isRaining());
     lastHarvestMessage =
         switch (result) {
           case SUCCESS -> buildHarvestSuccessMessage(cropType, plantManager.getLastHarvestAmount());
@@ -109,7 +126,11 @@ public class GameViewModel {
       return "Added to inventory";
     }
     String name = type.name().charAt(0) + type.name().substring(1).toLowerCase();
-    String bonusSuffix = amount > 1 ? " (x" + amount + " Combo!)" : "";
+    String bonusSuffix =
+        (amount > 1 && !weatherManager.isRaining()) ? " (x" + amount + " Combo!)" : "";
+    if (weatherManager.isRaining()) {
+      bonusSuffix = " (x" + amount + " RAIN BONUS!)";
+    }
     return "+"
         + amount
         + " "
@@ -138,6 +159,10 @@ public class GameViewModel {
 
   public PlantManager getPlantManager() {
     return plantManager;
+  }
+
+  public WeatherManager getWeatherManager() {
+    return weatherManager;
   }
 
   public SeedInventoryViewModel getSeedInventory() {

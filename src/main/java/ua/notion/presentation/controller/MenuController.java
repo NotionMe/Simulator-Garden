@@ -103,6 +103,10 @@ public class MenuController {
 
   @FXML
   private void handleShop() {
+    if (currentUser == null || currentUser.getId() == null) {
+      coordinator().showMessageOverlay("Error", "Please log in before opening the shop.", false);
+      return;
+    }
     navigateWithInjector(
         "/fxml/shop.fxml",
         "Garden Simulator - Shop",
@@ -111,8 +115,14 @@ public class MenuController {
               injector.getInstance(ua.notion.domain.service.PlayerInventoryItemService.class);
           var plantTypes =
               injector.getInstance(ua.notion.presentation.game.catalog.PlantTypeResolver.class);
+          var achievementService =
+              injector.getInstance(ua.notion.domain.service.AchievementService.class);
+          var achievements =
+              new ua.notion.presentation.achievement.AchievementAwarder(
+                  currentUser.getId(), achievementService);
           var viewModel =
-              new ua.notion.presentation.viewmodel.ShopViewModel(inventoryService, plantTypes);
+              new ua.notion.presentation.viewmodel.ShopViewModel(
+                  inventoryService, plantTypes, achievements);
           var controller = new ShopController(viewModel);
           loader.setController(controller);
           return controller;

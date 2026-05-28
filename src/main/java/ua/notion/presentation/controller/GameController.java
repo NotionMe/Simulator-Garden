@@ -8,8 +8,10 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import ua.notion.domain.entity.User;
+import ua.notion.domain.service.AchievementService;
 import ua.notion.domain.service.PlayerInventoryItemService;
 import ua.notion.infrastructure.config.AppInjector;
+import ua.notion.presentation.achievement.AchievementAwarder;
 import ua.notion.presentation.game.GameScene;
 import ua.notion.presentation.game.catalog.PlantTypeResolver;
 import ua.notion.presentation.ui.SceneCoordinator;
@@ -57,8 +59,11 @@ public class GameController {
     PlayerInventoryItemService inventoryService =
         injector.getInstance(PlayerInventoryItemService.class);
     PlantTypeResolver plantTypes = injector.getInstance(PlantTypeResolver.class);
+    AchievementService achievementService = injector.getInstance(AchievementService.class);
+    AchievementAwarder achievements =
+        new AchievementAwarder(currentUser.getId(), achievementService);
 
-    gameScene = new GameScene(currentUser.getId(), inventoryService, plantTypes);
+    gameScene = new GameScene(currentUser.getId(), inventoryService, plantTypes, achievements);
     gameScene.setOnEscapeToMenu(this::returnToMenu);
     gameScene.setOnOpenShop(this::openShop);
     gameScene.initialize();
@@ -121,8 +126,11 @@ public class GameController {
       FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/shop.fxml"));
       var inventoryService = injector.getInstance(PlayerInventoryItemService.class);
       var plantTypes = injector.getInstance(PlantTypeResolver.class);
+      var achievementService = injector.getInstance(AchievementService.class);
+      var achievements = new AchievementAwarder(currentUser.getId(), achievementService);
       var viewModel =
-          new ua.notion.presentation.viewmodel.ShopViewModel(inventoryService, plantTypes);
+          new ua.notion.presentation.viewmodel.ShopViewModel(
+              inventoryService, plantTypes, achievements);
       var controller = new ShopController(viewModel);
       loader.setController(controller);
       Parent root = loader.load();

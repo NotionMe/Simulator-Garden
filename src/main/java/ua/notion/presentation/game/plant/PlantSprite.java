@@ -35,12 +35,12 @@ public class PlantSprite {
     }
   }
 
-  public void update(double deltaSeconds) {
+  public void update(double deltaSeconds, double growthMultiplier) {
     if (removed) {
       return;
     }
 
-    timeInStage += deltaSeconds;
+    timeInStage += deltaSeconds * growthMultiplier;
 
     int lastStage = plantType.getStageCount() - 1;
 
@@ -120,6 +120,10 @@ public class PlantSprite {
 
   public int getTileY() {
     return tileY;
+  }
+
+  public void setStageIndex(int stageIndex) {
+    this.stageIndex = stageIndex;
   }
 
   /** Debug: advance one growth stage. */

@@ -25,11 +25,11 @@ public class PlantManager {
     plants.add(new PlantSprite(plantType, tileX, tileY));
   }
 
-  public void update(double deltaSeconds) {
+  public void update(double deltaSeconds, double growthMultiplier) {
     Iterator<PlantSprite> it = plants.iterator();
     while (it.hasNext()) {
       PlantSprite plant = it.next();
-      plant.update(deltaSeconds);
+      plant.update(deltaSeconds, growthMultiplier);
       if (plant.isRemoved()) {
         it.remove();
       }
@@ -42,7 +42,8 @@ public class PlantManager {
     return lastHarvestAmount;
   }
 
-  public HarvestResult tryHarvest(int tileX, int tileY, PlayerInventoryViewModel inventory) {
+  public HarvestResult tryHarvest(
+      int tileX, int tileY, PlayerInventoryViewModel inventory, boolean isRaining) {
     PlantSprite plant = getPlantAt(tileX, tileY);
     if (plant == null) {
       lastHarvestAmount = 0;
@@ -59,12 +60,12 @@ public class PlantManager {
 
     double roll = Math.random();
     int amount;
-    if (roll < 0.10) {
-      amount = 4;
-    } else if (roll < 0.35) {
-      amount = 2;
+    if (roll < (isRaining ? 0.25 : 0.10)) {
+      amount = isRaining ? 8 : 4;
+    } else if (roll < (isRaining ? 0.60 : 0.35)) {
+      amount = isRaining ? 4 : 2;
     } else {
-      amount = 1;
+      amount = isRaining ? 2 : 1;
     }
     lastHarvestAmount = amount;
 
@@ -100,6 +101,44 @@ public class PlantManager {
 
   public List<PlantSprite> getAllPlants() {
     return new ArrayList<>(plants);
+  }
+
+  public String serializePlants() {
+    StringBuilder sb = new StringBuilder();
+    for (PlantSprite plant : plants) {
+      sb.append(plant.getPlantType().name())
+          .append(",")
+          .append(plant.getTileX())
+          .append(",")
+          .append(plant.getTileY())
+          .append(",")
+          .append(plant.getStageIndex())
+          .append(";");
+    }
+    return sb.toString();
+  }
+
+  public void deserializePlants(String data) {
+    if (data == null || data.isEmpty()) return;
+    plants.clear();
+    String[] entries = data.split(";");
+    for (String entry : entries) {
+      if (entry.isEmpty()) continue;
+      String[] parts = entry.split(",");
+      if (parts.length == 4) {
+        try {
+          PlantType type = PlantType.valueOf(parts[0]);
+          int x = Integer.parseInt(parts[1]);
+          int y = Integer.parseInt(parts[2]);
+          int stage = Integer.parseInt(parts[3]);
+          PlantSprite sprite = new PlantSprite(type, x, y);
+          sprite.setStageIndex(stage);
+          plants.add(sprite);
+        } catch (Exception e) {
+          System.err.println("Failed to deserialize plant: " + entry);
+        }
+      }
+    }
   }
 
   public void clear() {

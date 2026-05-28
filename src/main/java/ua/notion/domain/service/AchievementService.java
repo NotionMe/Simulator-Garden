@@ -36,6 +36,13 @@ public class AchievementService {
     }
   }
 
+  public Optional<Achievement> unlockIfMissing(Integer userId, String title, String conditionKey) {
+    if (userId == null || hasAchievement(userId, conditionKey)) {
+      return Optional.empty();
+    }
+    return Optional.of(unlockAchievement(userId, title, conditionKey));
+  }
+
   public Optional<Achievement> findAchievementById(Integer id) {
     return achievementRepository.findById(id);
   }

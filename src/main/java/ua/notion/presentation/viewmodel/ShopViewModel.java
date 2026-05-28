@@ -7,6 +7,7 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import ua.notion.domain.service.PlayerInventoryItemService;
+import ua.notion.presentation.achievement.AchievementAwarder;
 import ua.notion.presentation.game.assets.PlantBasesAtlas.PlantType;
 import ua.notion.presentation.game.catalog.PlantTypeResolver;
 
@@ -16,6 +17,7 @@ public class ShopViewModel {
 
   private final PlayerInventoryItemService inventoryService;
   private final PlantTypeResolver plantTypes;
+  private final AchievementAwarder achievements;
   private final ObservableList<ShopItem> items = FXCollections.observableArrayList();
   private final IntegerProperty coins = new SimpleIntegerProperty(STARTING_COINS);
   private final StringProperty statusMessage = new SimpleStringProperty("");
@@ -23,9 +25,14 @@ public class ShopViewModel {
   private PlayerInventoryViewModel inventory;
   private int currentUserId;
 
-  public ShopViewModel(PlayerInventoryItemService inventoryService, PlantTypeResolver plantTypes) {
+  public ShopViewModel(
+      PlayerInventoryItemService inventoryService,
+      PlantTypeResolver plantTypes,
+      AchievementAwarder achievements) {
     this.inventoryService = inventoryService;
     this.plantTypes = plantTypes;
+    this.achievements = achievements;
+    this.achievements.setNotificationHandler(statusMessage::set);
   }
 
   public void setCurrentUserId(int userId) {
@@ -47,6 +54,10 @@ public class ShopViewModel {
             .toList());
   }
 
+  public void shopVisited() {
+    achievements.shopVisited();
+  }
+
   public boolean buy(ShopItem item) {
     if (item == null) {
       return false;
@@ -58,6 +69,7 @@ public class ShopViewModel {
     inventory.addItem(item.getPlantType(), 1);
     coins.set(coins.get() - item.getBuyPrice());
     statusMessage.set("Bought " + item.getDisplayName());
+    achievements.itemBought(item.getPlantType());
     return true;
   }
 
@@ -71,6 +83,7 @@ public class ShopViewModel {
     }
     coins.set(coins.get() + item.getSellPrice());
     statusMessage.set("Sold " + item.getDisplayName());
+    achievements.itemSold(item.getPlantType());
     return true;
   }
 
